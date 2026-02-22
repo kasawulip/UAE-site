@@ -286,15 +286,26 @@ const AppointmentForm = () => {
                 <p className="text-sm text-slate-600">Book Your Appointment</p>
               </div>
             </div>
-            <Button
-              onClick={() => window.location.href = '/admin/login'}
-              variant="outline"
-              className="border-slate-300"
-              data-testid="admin-login-nav-btn"
-            >
-              <ShieldCheck className="w-4 h-4 mr-2" />
-              Admin Login
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => window.location.href = '/cancel'}
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
+                data-testid="cancel-appointment-nav-btn"
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                Cancel Appointment
+              </Button>
+              <Button
+                onClick={() => window.location.href = '/admin/login'}
+                variant="outline"
+                className="border-slate-300"
+                data-testid="admin-login-nav-btn"
+              >
+                <ShieldCheck className="w-4 h-4 mr-2" />
+                Admin Login
+              </Button>
+            </div>
           </div>
         </div>
       </header>
