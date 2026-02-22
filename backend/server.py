@@ -371,8 +371,8 @@ async def create_appointment(appointment: AppointmentCreate):
     return appointment_obj
 
 @api_router.get("/appointments", response_model=List[Appointment])
-async def get_appointments():
-    """Get all appointments (for admin)"""
+async def get_appointments(current_admin: AdminUser = Depends(get_current_admin)):
+    """Get all appointments (protected - admin only)"""
     appointments = await db.appointments.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
     return appointments
 
