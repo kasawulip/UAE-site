@@ -29,13 +29,98 @@ const AppointmentForm = () => {
   const [submitted, setSubmitted] = useState(false);
   const [disabledDates, setDisabledDates] = useState([]);
 
-  // Handle input changes
+  // Validation functions
+  const validateNIN = (nin) => {
+    if (!nin) return 'NIN number is required';
+    if (nin.length !== 14) return 'NIN must be exactly 14 characters';
+    if (!nin.startsWith('CM') && !nin.startsWith('CF')) {
+      return 'NIN must start with CM or CF';
+    }
+    return '';
+  };
+
+  const validatePhone = (phone) => {
+    if (!phone) return 'Phone number is required';
+    
+    // Remove all non-digit characters for validation
+    const digitsOnly = phone.replace(/\D/g, '');
+    
+    // UAE phone format: +971XXXXXXXXX (12 digits total) or 05XXXXXXXX (10 digits)
+    if (phone.startsWith('+971')) {
+      if (digitsOnly.length !== 12) {
+        return 'UAE phone must be in format +971XXXXXXXXX (12 digits)';
+      }
+    } else if (phone.startsWith('05') || phone.startsWith('04') || phone.startsWith('02')) {
+      if (digitsOnly.length !== 10) {
+        return 'UAE phone must be 10 digits (e.g., 05XXXXXXXX)';
+      }
+    } else if (phone.startsWith('971')) {
+      if (digitsOnly.length !== 12) {
+        return 'UAE phone must be in format 971XXXXXXXXX (12 digits)';
+      }
+    } else {
+      return 'Enter valid UAE phone number (+971XXXXXXXXX or 05XXXXXXXX)';
+    }
+    
+    return '';
+  };
+
+  const validateName = (name, fieldName) => {
+    if (!name) return `${fieldName} is required`;
+    if (!/^[A-Za-z\s]+$/.test(name)) {
+      return `${fieldName} must contain only letters`;
+    }
+    return '';
+  };
+
+  const validateEmail = (email) => {
+    if (!email) return 'Email is required';
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address';
+    }
+    return '';
+  };
+
+  // Handle input changes with live validation
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+    
+    // For phone field, only allow numbers, +, and spaces
+    if (name === 'phone') {
+      const filteredValue = value.replace(/[^\d+\s]/g, '');
+      setFormData(prev => ({ ...prev, [name]: filteredValue }));
+      
+      // Live validation for phone
+      const phoneError = validatePhone(filteredValue);
+      setErrors(prev => ({ ...prev, phone: phoneError }));
+      return;
     }
+    
+    // For name fields, only allow letters and spaces
+    if (name === 'surname' || name === 'firstname') {
+      const filteredValue = value.replace(/[^A-Za-z\s]/g, '');
+      setFormData(prev => ({ ...prev, [name]: filteredValue }));
+      
+      // Live validation for names
+      const fieldLabel = name === 'surname' ? 'Surname' : 'First name';
+      const nameError = validateName(filteredValue, fieldLabel);
+      setErrors(prev => ({ ...prev, [name]: nameError }));
+      return;
+    }
+    
+    // Update form data
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Live validation based on field
+    let error = '';
+    if (name === 'nin') {
+      error = validateNIN(value);
+    } else if (name === 'email') {
+      error = validateEmail(value);
+    }
+    
+    setErrors(prev => ({ ...prev, [name]: error }));
   };
 
   // Handle location selection
