@@ -207,7 +207,7 @@ const CancelAppointment = () => {
 
           {/* Help Text */}
           <div className="mt-6 text-center text-sm text-slate-600">
-            <p>Need help? Contact us at support@nira.gov</p>
+            <p>Need help? Contact us at paul.kasawuli@nira.go.ug</p>
             <p className="mt-2">
               Want to reschedule instead? <button onClick={() => navigate('/')} className="text-amber-600 hover:text-amber-700 font-medium">Book a new appointment</button>
             </p>
