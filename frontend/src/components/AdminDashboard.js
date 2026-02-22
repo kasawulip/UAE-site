@@ -148,32 +148,107 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="flex gap-3 mb-6">
-            <Button
-              onClick={() => setFilter('all')}
-              variant={filter === 'all' ? 'default' : 'outline'}
-              className={filter === 'all' ? 'bg-slate-900 text-white' : ''}
-              data-testid="filter-all"
-            >
-              All Locations
-            </Button>
-            <Button
-              onClick={() => setFilter('Abu Dhabi')}
-              variant={filter === 'Abu Dhabi' ? 'default' : 'outline'}
-              className={filter === 'Abu Dhabi' ? 'bg-slate-900 text-white' : ''}
-              data-testid="filter-abu-dhabi"
-            >
-              Abu Dhabi
-            </Button>
-            <Button
-              onClick={() => setFilter('Dubai')}
-              variant={filter === 'Dubai' ? 'default' : 'outline'}
-              className={filter === 'Dubai' ? 'bg-slate-900 text-white' : ''}
-              data-testid="filter-dubai"
-            >
-              Dubai
-            </Button>
+          {/* Filters Section */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Filter className="w-5 h-5 text-slate-600" />
+              <h3 className="text-lg font-semibold text-slate-900">Filter Appointments</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Location Filter */}
+              <div>
+                <Label className="text-sm font-medium text-slate-700 mb-3 block">Filter by Location</Label>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => setFilter('all')}
+                    variant={filter === 'all' ? 'default' : 'outline'}
+                    className={filter === 'all' ? 'bg-slate-900 text-white' : ''}
+                    data-testid="filter-all"
+                  >
+                    All Locations
+                  </Button>
+                  <Button
+                    onClick={() => setFilter('Abu Dhabi')}
+                    variant={filter === 'Abu Dhabi' ? 'default' : 'outline'}
+                    className={filter === 'Abu Dhabi' ? 'bg-slate-900 text-white' : ''}
+                    data-testid="filter-abu-dhabi"
+                  >
+                    Abu Dhabi
+                  </Button>
+                  <Button
+                    onClick={() => setFilter('Dubai')}
+                    variant={filter === 'Dubai' ? 'default' : 'outline'}
+                    className={filter === 'Dubai' ? 'bg-slate-900 text-white' : ''}
+                    data-testid="filter-dubai"
+                  >
+                    Dubai
+                  </Button>
+                </div>
+              </div>
+
+              {/* Date Filter */}
+              <div>
+                <Label htmlFor="date-filter" className="text-sm font-medium text-slate-700 mb-3 block">
+                  Filter by Date
+                </Label>
+                <div className="flex gap-3 items-center">
+                  <Input
+                    id="date-filter"
+                    type="date"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="flex-1"
+                    data-testid="date-filter-input"
+                  />
+                  {dateFilter && (
+                    <Button
+                      onClick={() => setDateFilter('')}
+                      variant="outline"
+                      size="sm"
+                      data-testid="clear-date-filter"
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Export and Results Summary */}
+            <div className="flex items-center justify-between mt-6 pt-6 border-t border-slate-200">
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-slate-600">
+                  Showing <span className="font-semibold text-slate-900">{stats.filtered}</span> of <span className="font-semibold text-slate-900">{stats.total}</span> appointments
+                </p>
+              </div>
+              <Button
+                onClick={exportToExcel}
+                className="bg-green-600 hover:bg-green-700 text-white"
+                disabled={filteredAppointments.length === 0}
+                data-testid="export-excel-btn"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export to Excel
+              </Button>
+            </div>
           </div>
+
+          {/* Filter Badges */}
+          {(filter !== 'all' || dateFilter) && (
+            <div className="flex gap-2 mb-4">
+              {filter !== 'all' && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800">
+                  Location: {filter}
+                </span>
+              )}
+              {dateFilter && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                  Date: {format(new Date(dateFilter), 'MMM d, yyyy')}
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
