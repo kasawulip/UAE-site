@@ -113,21 +113,25 @@ const AppointmentForm = () => {
     }
   };
 
-  // Date matcher for calendar (only Monday-Thursday)
-  const isWeekday = (date) => {
-    return isMonday(date) || isTuesday(date) || isWednesday(date) || isThursday(date);
-  };
-
-  const isDateDisabled = (date) => {
-    if (!isWeekday(date)) return true;
+  // Matcher for calendar - disable weekends and past dates
+  const disabledMatcher = (date) => {
+    const day = getDay(date);
+    // Disable Friday (5), Saturday (6), Sunday (0)
+    if (day === 0 || day === 5 || day === 6) return true;
+    
+    // Disable past dates
     if (date < startOfDay(new Date())) return true;
-    return disabledDates.some(disabledDate => 
+    
+    // Disable dates with no slots
+    const isDisabled = disabledDates.some(disabledDate => 
       format(disabledDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
     );
+    
+    return isDisabled;
   };
 
   const handleDateSelect = (date) => {
-    if (date && !isDateDisabled(date)) {
+    if (date) {
       setSelectedDate(date);
       const dateStr = format(date, 'yyyy-MM-dd');
       setFormData(prev => ({ ...prev, appointment_date: dateStr }));
