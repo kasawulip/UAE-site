@@ -9,6 +9,23 @@
   min-height: 100vh;
 }
 
+/* Fingerprint background for homepage */
+.homepage-background {
+  background-image: url('https://static.prod-images.emergentagent.com/jobs/d69cd975-3276-42e8-8bc4-74369b63f49d/images/fd11ccc00e99849e1d5bb8258b32f73c0beda17a3dcfff28b84d2622f017302a.png');
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: 400px 400px;
+  background-attachment: fixed;
+  opacity: 0.03;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
