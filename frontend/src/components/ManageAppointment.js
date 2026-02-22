@@ -66,25 +66,21 @@ const ManageAppointment = () => {
     setLoading(true);
     
     try {
-      // Try to cancel (which will verify the appointment exists)
-      // If successful, it means the appointment exists
-      const testResponse = await axios.get(`${API}/slots/${encodeURIComponent('Abu Dhabi')}/${lookupData.appointment_date}`);
-      
-      // If we got here, create a mock appointment object for display
-      // In a real scenario, you'd want a dedicated lookup endpoint
-      setAppointment({
-        nin: lookupData.nin,
-        appointment_date: lookupData.appointment_date,
-        // These will be filled from the actual appointment when cancelled/modified
-        firstname: '',
-        surname: '',
-        location: 'Abu Dhabi', // Default, will be updated
-        phone: '',
-        email: ''
+      const response = await axios.get(`${API}/appointments/lookup`, {
+        params: {
+          nin: lookupData.nin,
+          appointment_date: lookupData.appointment_date
+        }
       });
+      
+      setAppointment(response.data);
+      setNewLocation(response.data.location);
       setStep(2);
     } catch (error) {
-      toast.error('Unable to find appointment. Please check your NIN and date.');
+      const errorMsg = error.response?.status === 404 
+        ? 'No appointment found with this NIN and date'
+        : 'Error finding appointment. Please try again.';
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
