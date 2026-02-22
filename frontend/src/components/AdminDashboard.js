@@ -16,6 +16,7 @@ const AdminDashboard = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,14 +34,63 @@ const AdminDashboard = () => {
     }
   };
 
-  const filteredAppointments = filter === 'all' 
-    ? appointments 
-    : appointments.filter(apt => apt.location === filter);
+  // Apply filters
+  const filteredAppointments = appointments.filter(apt => {
+    // Location filter
+    const locationMatch = filter === 'all' || apt.location === filter;
+    
+    // Date filter
+    const dateMatch = !dateFilter || apt.appointment_date === dateFilter;
+    
+    return locationMatch && dateMatch;
+  });
 
   const stats = {
     total: appointments.length,
     abuDhabi: appointments.filter(apt => apt.location === 'Abu Dhabi').length,
-    dubai: appointments.filter(apt => apt.location === 'Dubai').length
+    dubai: appointments.filter(apt => apt.location === 'Dubai').length,
+    filtered: filteredAppointments.length
+  };
+
+  // Export to Excel function
+  const exportToExcel = () => {
+    // Prepare data for export
+    const exportData = filteredAppointments.map(apt => ({
+      'Name': `${apt.firstname} ${apt.surname}`,
+      'NIN': apt.nin,
+      'Phone': apt.phone,
+      'Email': apt.email,
+      'Location': apt.location,
+      'Appointment Date': format(new Date(apt.appointment_date), 'MMM d, yyyy'),
+      'Booked On': format(new Date(apt.created_at), 'MMM d, yyyy HH:mm')
+    }));
+
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 20 }, // Name
+      { wch: 15 }, // NIN
+      { wch: 15 }, // Phone
+      { wch: 30 }, // Email
+      { wch: 12 }, // Location
+      { wch: 15 }, // Appointment Date
+      { wch: 20 }  // Booked On
+    ];
+
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Appointments');
+
+    // Generate filename with current date and filters
+    let filename = 'National_ID_Appointments';
+    if (filter !== 'all') filename += `_${filter.replace(' ', '_')}`;
+    if (dateFilter) filename += `_${dateFilter}`;
+    filename += `_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+
+    // Download
+    XLSX.writeFile(wb, filename);
   };
 
   if (loading) {
