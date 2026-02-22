@@ -517,6 +517,7 @@ const AppointmentForm = () => {
           </form>
         </motion.div>
       </main>
+      </div>
     </div>
   );
 };
