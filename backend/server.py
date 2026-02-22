@@ -123,6 +123,65 @@ class SlotAvailability(BaseModel):
     available_slots: int
     total_slots: int
 
+# Admin Models
+class AdminUser(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    username: str
+    email: EmailStr
+    hashed_password: str
+    role: str = "viewer"  # viewer or admin
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class AdminCreate(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+    role: str = "viewer"
+
+class AdminLogin(BaseModel):
+    username: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    role: str
+    username: str
+
+# Auth helper functions
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    try:
+        token = credentials.credentials
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+        
+        admin = await db.admins.find_one({"username": username}, {"_id": 0})
+        if admin is None:
+            raise HTTPException(status_code=401, detail="Admin not found")
+        return AdminUser(**admin)
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 # Helper function to send email
 async def send_confirmation_email(recipient_email: str, firstname: str, surname: str, location: str, appointment_date: str):
     html_content = f"""
