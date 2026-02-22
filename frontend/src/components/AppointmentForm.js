@@ -349,7 +349,8 @@ const AppointmentForm = () => {
                     mode="single"
                     selected={selectedDate}
                     onSelect={handleDateSelect}
-                    disabled={isDateDisabled}
+                    disabled={disabledMatcher}
+                    fromDate={new Date()}
                     className="rounded-md border shadow" 
                     data-testid="appointment-calendar"
                   />
