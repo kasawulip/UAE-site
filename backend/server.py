@@ -46,6 +46,52 @@ class AppointmentCreate(BaseModel):
     email: EmailStr
     location: str
     appointment_date: str
+    
+    @field_validator('surname', 'firstname')
+    @classmethod
+    def validate_name(cls, v, info):
+        if not v or not v.strip():
+            raise ValueError(f'{info.field_name} is required')
+        if not re.match(r'^[A-Za-z\s]+$', v):
+            raise ValueError(f'{info.field_name} must contain only letters')
+        return v.strip()
+    
+    @field_validator('nin')
+    @classmethod
+    def validate_nin(cls, v):
+        if not v or not v.strip():
+            raise ValueError('NIN is required')
+        v = v.strip()
+        if len(v) != 14:
+            raise ValueError('NIN must be exactly 14 characters')
+        if not v.startswith('CM') and not v.startswith('CF'):
+            raise ValueError('NIN must start with CM or CF')
+        return v
+    
+    @field_validator('phone')
+    @classmethod
+    def validate_phone(cls, v):
+        if not v or not v.strip():
+            raise ValueError('Phone number is required')
+        
+        # Remove spaces for validation
+        phone_clean = v.replace(' ', '')
+        digits_only = re.sub(r'\D', '', phone_clean)
+        
+        # UAE phone validation
+        if phone_clean.startswith('+971'):
+            if len(digits_only) != 12:
+                raise ValueError('UAE phone must be in format +971XXXXXXXXX (12 digits)')
+        elif phone_clean.startswith('971'):
+            if len(digits_only) != 12:
+                raise ValueError('UAE phone must be in format 971XXXXXXXXX (12 digits)')
+        elif phone_clean.startswith('05') or phone_clean.startswith('04') or phone_clean.startswith('02'):
+            if len(digits_only) != 10:
+                raise ValueError('UAE phone must be 10 digits (e.g., 05XXXXXXXX)')
+        else:
+            raise ValueError('Enter valid UAE phone number (+971XXXXXXXXX or 05XXXXXXXX)')
+        
+        return v
 
 class Appointment(BaseModel):
     model_config = ConfigDict(extra="ignore")
