@@ -159,16 +159,30 @@ const AppointmentForm = () => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.surname.trim()) newErrors.surname = 'Surname is required';
-    if (!formData.firstname.trim()) newErrors.firstname = 'First name is required';
-    if (!formData.nin.trim()) newErrors.nin = 'NIN number is required';
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
-    }
+    // Validate surname
+    const surnameError = validateName(formData.surname, 'Surname');
+    if (surnameError) newErrors.surname = surnameError;
+    
+    // Validate firstname
+    const firstnameError = validateName(formData.firstname, 'First name');
+    if (firstnameError) newErrors.firstname = firstnameError;
+    
+    // Validate NIN
+    const ninError = validateNIN(formData.nin);
+    if (ninError) newErrors.nin = ninError;
+    
+    // Validate phone
+    const phoneError = validatePhone(formData.phone);
+    if (phoneError) newErrors.phone = phoneError;
+    
+    // Validate email
+    const emailError = validateEmail(formData.email);
+    if (emailError) newErrors.email = emailError;
+    
+    // Validate location
     if (!formData.location) newErrors.location = 'Please select a location';
+    
+    // Validate date
     if (!formData.appointment_date) newErrors.appointment_date = 'Please select a date';
     
     setErrors(newErrors);
