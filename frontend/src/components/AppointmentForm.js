@@ -569,7 +569,7 @@ const AppointmentForm = () => {
               >
                 <h2 className="text-2xl font-semibold text-slate-900 mb-6 flex items-center gap-2">
                   <Calendar className="w-6 h-6 text-amber-600" />
-                  Select Appointment Date *
+                  Select Pick-up Date *
                 </h2>
                 
                 <div className="flex justify-center">
