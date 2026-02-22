@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { Calendar, MapPin, Mail, Phone, User, ShieldCheck, Loader2, Download, Filter } from 'lucide-react';
+import { Calendar, MapPin, Mail, Phone, User, ShieldCheck, Loader2, Download, Filter, Search, LogOut, FileSpreadsheet, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -17,24 +20,55 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [adminInfo, setAdminInfo] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchAppointments();
+    checkAuth();
   }, []);
 
-  const fetchAppointments = async () => {
+  const checkAuth = async () => {
+    const token = localStorage.getItem('admin_token');
+    const username = localStorage.getItem('admin_username');
+    const role = localStorage.getItem('admin_role');
+    
+    if (!token) {
+      navigate('/admin/login');
+      return;
+    }
+
+    setAdminInfo({ username, role });
+    await fetchAppointments(token);
+  };
+
+  const fetchAppointments = async (token) => {
     try {
-      const response = await axios.get(`${API}/appointments`);
+      const response = await axios.get(`${API}/appointments`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setAppointments(response.data);
     } catch (error) {
-      console.error('Error fetching appointments:', error);
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again');
+        handleLogout();
+      } else {
+        console.error('Error fetching appointments:', error);
+        toast.error('Failed to fetch appointments');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Apply filters
+  const handleLogout = () => {
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_username');
+    localStorage.removeItem('admin_role');
+    navigate('/admin/login');
+  };
+
+  // Apply filters and search
   const filteredAppointments = appointments.filter(apt => {
     // Location filter
     const locationMatch = filter === 'all' || apt.location === filter;
@@ -42,7 +76,12 @@ const AdminDashboard = () => {
     // Date filter
     const dateMatch = !dateFilter || apt.appointment_date === dateFilter;
     
-    return locationMatch && dateMatch;
+    // Search filter (name or NIN)
+    const searchMatch = !searchQuery || 
+      `${apt.firstname} ${apt.surname}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      apt.nin.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return locationMatch && dateMatch && searchMatch;
   });
 
   const stats = {
@@ -52,9 +91,8 @@ const AdminDashboard = () => {
     filtered: filteredAppointments.length
   };
 
-  // Export to Excel function
+  // Export to Excel
   const exportToExcel = () => {
-    // Prepare data for export
     const exportData = filteredAppointments.map(apt => ({
       'Name': `${apt.firstname} ${apt.surname}`,
       'NIN': apt.nin,
@@ -65,32 +103,106 @@ const AdminDashboard = () => {
       'Booked On': format(new Date(apt.created_at), 'MMM d, yyyy HH:mm')
     }));
 
-    // Create worksheet
     const ws = XLSX.utils.json_to_sheet(exportData);
-    
-    // Set column widths
     ws['!cols'] = [
-      { wch: 20 }, // Name
-      { wch: 15 }, // NIN
-      { wch: 15 }, // Phone
-      { wch: 30 }, // Email
-      { wch: 12 }, // Location
-      { wch: 15 }, // Appointment Date
-      { wch: 20 }  // Booked On
+      { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 30 },
+      { wch: 12 }, { wch: 15 }, { wch: 20 }
     ];
 
-    // Create workbook
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Appointments');
 
-    // Generate filename with current date and filters
     let filename = 'National_ID_Appointments';
     if (filter !== 'all') filename += `_${filter.replace(' ', '_')}`;
     if (dateFilter) filename += `_${dateFilter}`;
     filename += `_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
 
-    // Download
     XLSX.writeFile(wb, filename);
+    toast.success('Excel file downloaded successfully');
+  };
+
+  // Export to CSV
+  const exportToCSV = () => {
+    const exportData = filteredAppointments.map(apt => ({
+      'Name': `${apt.firstname} ${apt.surname}`,
+      'NIN': apt.nin,
+      'Phone': apt.phone,
+      'Email': apt.email,
+      'Location': apt.location,
+      'Appointment Date': format(new Date(apt.appointment_date), 'MMM d, yyyy'),
+      'Booked On': format(new Date(apt.created_at), 'MMM d, yyyy HH:mm')
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const csv = XLSX.utils.sheet_to_csv(ws);
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    let filename = 'National_ID_Appointments';
+    if (filter !== 'all') filename += `_${filter.replace(' ', '_')}`;
+    if (dateFilter) filename += `_${dateFilter}`;
+    filename += `_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success('CSV file downloaded successfully');
+  };
+
+  // Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    
+    // Title
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text('National ID Appointments', 14, 20);
+    
+    // Info
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Generated: ${format(new Date(), 'MMM d, yyyy HH:mm')}`, 14, 28);
+    doc.text(`Total Records: ${filteredAppointments.length}`, 14, 34);
+    
+    if (filter !== 'all') {
+      doc.text(`Location: ${filter}`, 14, 40);
+    }
+    if (dateFilter) {
+      doc.text(`Date: ${format(new Date(dateFilter), 'MMM d, yyyy')}`, 14, filter !== 'all' ? 46 : 40);
+    }
+    
+    // Table
+    const tableData = filteredAppointments.map(apt => [
+      `${apt.firstname} ${apt.surname}`,
+      apt.nin,
+      apt.phone,
+      apt.email,
+      apt.location,
+      format(new Date(apt.appointment_date), 'MMM d, yyyy')
+    ]);
+
+    doc.autoTable({
+      startY: filter !== 'all' || dateFilter ? 52 : 40,
+      head: [['Name', 'NIN', 'Phone', 'Email', 'Location', 'Date']],
+      body: tableData,
+      theme: 'grid',
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255] }
+    });
+
+    let filename = 'National_ID_Appointments';
+    if (filter !== 'all') filename += `_${filter.replace(' ', '_')}`;
+    if (dateFilter) filename += `_${dateFilter}`;
+    filename += `_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+
+    doc.save(filename);
+    toast.success('PDF file downloaded successfully');
   };
 
   if (loading) {
@@ -103,6 +215,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      {/* Header */}
       <header className="bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
@@ -112,27 +225,42 @@ const AdminDashboard = () => {
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Admin Dashboard</h1>
-                <p className="text-sm text-slate-600">Manage Appointments</p>
+                <p className="text-sm text-slate-600">
+                  {adminInfo?.username} ({adminInfo?.role})
+                </p>
               </div>
             </div>
-            <Button 
-              onClick={() => navigate('/')} 
-              variant="outline"
-              className="border-slate-300"
-              data-testid="back-to-booking-btn"
-            >
-              Back to Booking
-            </Button>
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => navigate('/')} 
+                variant="outline"
+                className="border-slate-300"
+                data-testid="back-to-booking-btn"
+              >
+                Back to Booking
+              </Button>
+              <Button 
+                onClick={handleLogout} 
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
+                data-testid="logout-btn"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
+          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6" data-testid="stat-total">
               <p className="text-sm font-medium text-slate-600 mb-2">Total Appointments</p>
@@ -146,6 +274,22 @@ const AdminDashboard = () => {
               <p className="text-sm font-medium text-slate-600 mb-2">Dubai</p>
               <p className="text-4xl font-bold text-slate-900">{stats.dubai}</p>
             </div>
+          </div>
+
+          {/* Search Box */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Search className="w-5 h-5 text-slate-600" />
+              <h3 className="text-lg font-semibold text-slate-900">Search Appointments</h3>
+            </div>
+            <Input
+              type="text"
+              placeholder="Search by name or NIN number..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full"
+              data-testid="search-input"
+            />
           </div>
 
           {/* Filters Section */}
@@ -222,20 +366,40 @@ const AdminDashboard = () => {
                   Showing <span className="font-semibold text-slate-900">{stats.filtered}</span> of <span className="font-semibold text-slate-900">{stats.total}</span> appointments
                 </p>
               </div>
-              <Button
-                onClick={exportToExcel}
-                className="bg-green-600 hover:bg-green-700 text-white"
-                disabled={filteredAppointments.length === 0}
-                data-testid="export-excel-btn"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export to Excel
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={exportToExcel}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  disabled={filteredAppointments.length === 0}
+                  data-testid="export-excel-btn"
+                >
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Excel
+                </Button>
+                <Button
+                  onClick={exportToCSV}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={filteredAppointments.length === 0}
+                  data-testid="export-csv-btn"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  CSV
+                </Button>
+                <Button
+                  onClick={exportToPDF}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  disabled={filteredAppointments.length === 0}
+                  data-testid="export-pdf-btn"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  PDF
+                </Button>
+              </div>
             </div>
           </div>
 
           {/* Filter Badges */}
-          {(filter !== 'all' || dateFilter) && (
+          {(filter !== 'all' || dateFilter || searchQuery) && (
             <div className="flex gap-2 mb-4">
               {filter !== 'all' && (
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800">
@@ -247,9 +411,15 @@ const AdminDashboard = () => {
                   Date: {format(new Date(dateFilter), 'MMM d, yyyy')}
                 </span>
               )}
+              {searchQuery && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                  Search: {searchQuery}
+                </span>
+              )}
             </div>
           )}
 
+          {/* Appointments Table */}
           <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full" data-testid="appointments-table">
