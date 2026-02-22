@@ -1,0 +1,164 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "E1_National_ID_System",
+      "tone": "Authoritative, Efficient, Modern, Trustworthy",
+      "archetype": "Swiss High-Contrast + Desert Warmth",
+      "visual_mood": "Clean grids, ample whitespace, subtle gold accents, official typography"
+    },
+    "typography": {
+      "font_family": {
+        "headings": "Outfit, sans-serif",
+        "body": "IBM Plex Sans, sans-serif"
+      },
+      "scale": {
+        "h1": "text-4xl md:text-5xl font-bold tracking-tight",
+        "h2": "text-3xl font-semibold tracking-tight",
+        "h3": "text-2xl font-medium",
+        "body": "text-base leading-relaxed text-slate-600",
+        "label": "text-sm font-medium uppercase tracking-wider text-slate-500"
+      },
+      "imports": [
+        "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+      ]
+    },
+    "colors": {
+      "palette": {
+        "primary": {
+          "DEFAULT": "#0F172A",
+          "foreground": "#F8FAFC",
+          "hover": "#1E293B"
+        },
+        "secondary": {
+          "DEFAULT": "#F1F5F9",
+          "foreground": "#0F172A"
+        },
+        "accent": {
+          "DEFAULT": "#D97706", 
+          "foreground": "#FFFFFF",
+          "subtle": "#FEF3C7"
+        },
+        "background": {
+          "DEFAULT": "#FFFFFF",
+          "subtle": "#F8FAFC",
+          "sidebar": "#F1F5F9"
+        },
+        "border": {
+          "DEFAULT": "#E2E8F0",
+          "active": "#94A3B8"
+        },
+        "status": {
+          "success": "#10B981",
+          "error": "#EF4444",
+          "warning": "#F59E0B"
+        }
+      },
+      "usage_rules": {
+        "buttons": "Primary for main actions (Submit, Next). Secondary for Back/Cancel.",
+        "text": "Slate-900 for headings, Slate-600 for body. Never pure black.",
+        "accents": "Use Amber/Gold sparingly for active states, focus rings, or key highlights."
+      }
+    },
+    "layout": {
+      "spacing_scale": "Relaxed. Use p-6 or p-8 for containers. gap-6 for grids.",
+      "container_width": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+      "grid_system": {
+        "dashboard": "grid grid-cols-1 md:grid-cols-12 gap-6",
+        "form": "max-w-2xl mx-auto space-y-8"
+      },
+      "radius": "rounded-md"
+    },
+    "components": {
+      "buttons": {
+        "base": "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+        "primary": "bg-slate-900 text-white hover:bg-slate-800 shadow-sm",
+        "secondary": "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 shadow-sm",
+        "ghost": "hover:bg-slate-100 hover:text-slate-900"
+      },
+      "cards": {
+        "base": "bg-white rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200",
+        "interactive": "cursor-pointer hover:border-amber-400/50 hover:ring-1 hover:ring-amber-400/50"
+      },
+      "inputs": {
+        "base": "flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/20 focus-visible:border-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+      }
+    },
+    "motion": {
+      "library": "framer-motion",
+      "transitions": {
+        "default": { "duration": 0.3, "ease": "easeInOut" },
+        "page_transition": {
+          "initial": { "opacity": 0, "y": 20 },
+          "animate": { "opacity": 1, "y": 0 },
+          "exit": { "opacity": 0, "y": -20 }
+        }
+      }
+    },
+    "assets": {
+      "images": {
+        "abu_dhabi": "https://images.unsplash.com/photo-1628005926467-5530202e5327?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHw0fHxhYnUlMjBkaGFiaSUyMHNoZWlraCUyMHpheWVkJTIwbW9zcXVlJTIwbWluaW1hbCUyMGFyY2hpdGVjdHVyZXxlbnwwfHx8fDE3NzE3NzE3ODJ8MA&ixlib=rb-4.1.0&q=85",
+        "dubai": "https://images.unsplash.com/photo-1721235421626-a5c5ce155842?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDJ8MHwxfHNlYXJjaHw0fHxkdWJhaSUyMGJ1cmolMjBraGFsaWZhJTIwbWluaW1hbCUyMGFyY2hpdGVjdHVyZXxlbnwwfHx8fDE3NzE3NzE3ODl8MA&ixlib=rb-4.1.0&q=85",
+        "hero_bg": "https://images.pexels.com/photos/28718303/pexels-photo-28718303.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "logo_placeholder": "https://ui-avatars.com/api/?name=National+ID&background=0F172A&color=fff&size=128"
+      },
+      "icons": {
+        "library": "lucide-react",
+        "preferred": ["Calendar", "MapPin", "CheckCircle", "User", "Mail", "Phone", "ShieldCheck", "Loader2"]
+      }
+    },
+    "accessibility": {
+      "contrast": "Ensure 4.5:1 ratio for normal text. Use Slate-600+ on white.",
+      "focus": "Visible focus rings (Amber-500/50) are mandatory on all interactive elements.",
+      "aria": "Use aria-labels on icon-only buttons. Validate forms with aria-invalid."
+    }
+  },
+  "implementation_plan": {
+    "phases": [
+      {
+        "name": "Phase 1: Setup & Global Styles",
+        "tasks": [
+          "Install fonts (Outfit, IBM Plex Sans)",
+          "Configure Tailwind colors and fonts",
+          "Setup global layout wrapper (Navbar, Footer)"
+        ]
+      },
+      {
+        "name": "Phase 2: Components & UI Kit",
+        "tasks": [
+          "Customize Shadcn Input, Button, Card, Calendar",
+          "Build LocationCard component (with images)",
+          "Build TimeSlotPicker component"
+        ]
+      },
+      {
+        "name": "Phase 3: Pages & Logic",
+        "tasks": [
+          "Develop Appointment Form (Multi-step or Single long form)",
+          "Implement Validation Logic (Zod + React Hook Form)",
+          "Build Admin Dashboard (Table view of appointments)"
+        ]
+      }
+    ],
+    "universal_guidelines": [
+      "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+      "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+      "Create depth through layered design elements with z-index hierarchy",
+      "Use glass-morphism effects with backdrop filters (12-24px blur)",
+      "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+      "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file. This disrupts the human natural reading flow of text",
+      "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+      "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯 etc for icons.",
+      "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+      "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+      "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+      "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN",
+      "Prioritize using pre-existing components from src/components/ui when applicable",
+      "Create new components that match the style and conventions of existing components when needed",
+      "Examine existing components to understand the project's component patterns before creating new ones",
+      "Components MUST use named exports (export const ComponentName = ...)",
+      "Pages MUST use default exports (export default function PageName() {...})",
+      "Use sonner for toasts",
+      "Sonner component are located in /app/src/components/ui/sonner.tsx"
+    ]
+  }
+}
