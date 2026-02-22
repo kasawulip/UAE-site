@@ -407,9 +407,18 @@ async def lookup_appointment(nin: str, appointment_date: str):
     return Appointment(**appointment)
 
 @api_router.get("/appointments", response_model=List[Appointment])
-async def get_appointments(current_admin: AdminUser = Depends(get_current_admin)):
-    """Get all appointments (protected - admin only)"""
-    appointments = await db.appointments.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+async def get_appointments(
+    current_admin: AdminUser = Depends(get_current_admin),
+    skip: int = 0,
+    limit: int = 100
+):
+    """Get all appointments (protected - admin only) with pagination"""
+    # Enforce max limit to prevent performance issues
+    limit = min(limit, 500)
+    appointments = await db.appointments.find(
+        {}, 
+        {"_id": 0}
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     return appointments
 
 @api_router.delete("/appointments/cancel")
