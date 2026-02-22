@@ -315,6 +315,74 @@ async def get_current_admin_info(current_admin: AdminUser = Depends(get_current_
     """Get current admin info"""
     return current_admin
 
+# Superadmin-only helper
+async def require_superadmin(current_admin: AdminUser = Depends(get_current_admin)):
+    """Require superadmin role for access"""
+    if current_admin.role != "superadmin":
+        raise HTTPException(status_code=403, detail="Superadmin access required")
+    return current_admin
+
+@api_router.get("/admin/users", response_model=List[AdminListResponse])
+async def list_all_admins(current_admin: AdminUser = Depends(require_superadmin)):
+    """List all admin users (superadmin only)"""
+    admins = await db.admins.find({}, {"_id": 0, "hashed_password": 0}).to_list(100)
+    return admins
+
+@api_router.post("/admin/users", response_model=AdminListResponse)
+async def create_admin_user(admin: AdminCreate, current_admin: AdminUser = Depends(require_superadmin)):
+    """Create a new admin user (superadmin only)"""
+    # Check if username exists
+    existing = await db.admins.find_one({"username": admin.username}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    
+    # Prevent creating another superadmin
+    if admin.role == "superadmin":
+        raise HTTPException(status_code=400, detail="Cannot create another superadmin")
+    
+    # Create admin
+    admin_obj = AdminUser(
+        username=admin.username,
+        email=admin.email,
+        hashed_password=get_password_hash(admin.password),
+        role=admin.role
+    )
+    
+    doc = admin_obj.model_dump()
+    await db.admins.insert_one(doc)
+    
+    return AdminListResponse(
+        id=admin_obj.id,
+        username=admin_obj.username,
+        email=admin_obj.email,
+        role=admin_obj.role,
+        created_at=admin_obj.created_at
+    )
+
+@api_router.delete("/admin/users/{username}")
+async def delete_admin_user(username: str, current_admin: AdminUser = Depends(require_superadmin)):
+    """Delete an admin user (superadmin only)"""
+    # Cannot delete yourself
+    if username == current_admin.username:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    # Check if user exists
+    existing = await db.admins.find_one({"username": username}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Admin user not found")
+    
+    # Cannot delete another superadmin
+    if existing.get('role') == 'superadmin':
+        raise HTTPException(status_code=400, detail="Cannot delete a superadmin account")
+    
+    # Delete the admin
+    result = await db.admins.delete_one({"username": username})
+    
+    if result.deleted_count == 1:
+        return {"message": f"Admin user '{username}' deleted successfully"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to delete admin user")
+
 @api_router.get("/slots/{location}/{date}")
 async def get_slot_availability(location: str, date: str):
     """Get available slots for a specific location and date"""
