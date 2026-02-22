@@ -184,6 +184,17 @@ async def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(
 
 # Helper function to send email
 async def send_confirmation_email(recipient_email: str, firstname: str, surname: str, location: str, appointment_date: str):
+    # Format date properly
+    from datetime import datetime
+    date_obj = datetime.strptime(appointment_date, '%Y-%m-%d')
+    formatted_date = date_obj.strftime('%A, %B %d, %Y')
+    
+    # Customize message based on location
+    if location == "Abu Dhabi":
+        venue = "Uganda Embassy, Abu Dhabi"
+    else:  # Dubai
+        venue = "Uganda Consulate, Dubai"
+    
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -192,9 +203,10 @@ async def send_confirmation_email(recipient_email: str, firstname: str, surname:
             body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
             .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
             .header {{ background-color: #0F172A; color: white; padding: 20px; text-align: center; }}
-            .content {{ padding: 20px; background-color: #f9f9f9; }}
+            .content {{ padding: 30px; background-color: #f9f9f9; }}
             .footer {{ padding: 20px; text-align: center; font-size: 12px; color: #666; }}
             .highlight {{ color: #D97706; font-weight: bold; }}
+            .info-box {{ background-color: white; border-left: 4px solid #D97706; padding: 15px; margin: 20px 0; }}
         </style>
     </head>
     <body>
@@ -203,20 +215,24 @@ async def send_confirmation_email(recipient_email: str, firstname: str, surname:
                 <h1>National ID Appointment Confirmation</h1>
             </div>
             <div class="content">
-                <p>Dear {firstname} {surname},</p>
-                <p><strong>This is to confirm your appointment to pick your National ID.</strong></p>
-                <p>Your appointment details:</p>
-                <ul>
-                    <li><strong>Name:</strong> {firstname} {surname}</li>
-                    <li><strong>Location:</strong> <span class="highlight">{location}</span></li>
-                    <li><strong>Date:</strong> <span class="highlight">{appointment_date}</span></li>
-                    <li><strong>Time:</strong> 9:00 AM - 3:00 PM</li>
-                </ul>
-                <p>Please bring a valid form of identification and arrive during the scheduled time window.</p>
-                <p>If you need to make any changes, please contact our office.</p>
+                <p>Dear <strong>{firstname} {surname}</strong>,</p>
+                
+                <p>Thank you for booking your National ID Issuance Appointment.</p>
+                
+                <div class="info-box">
+                    <p style="margin: 5px 0;"><strong>Venue:</strong> {venue}</p>
+                    <p style="margin: 5px 0;"><strong>Date:</strong> <span class="highlight">{formatted_date}</span></p>
+                </div>
+                
+                <p><strong>Please note that our work hours are between 9am to 1pm</strong></p>
+                
+                <p>If you need to reschedule, you can go back to the booking page and choose another date.</p>
+                
+                <p style="margin-top: 30px;">Warm regards,<br>
+                <strong>NIRA Diaspora Desk for Middle East</strong></p>
             </div>
             <div class="footer">
-                <p>National ID Issuance Department</p>
+                <p>This is an automated message. Please do not reply to this email.</p>
             </div>
         </div>
     </body>
@@ -226,7 +242,7 @@ async def send_confirmation_email(recipient_email: str, firstname: str, surname:
     params = {
         "from": SENDER_EMAIL,
         "to": [recipient_email],
-        "subject": "National ID Appointment Confirmation",
+        "subject": "National ID Appointment Confirmation - NIRA",
         "html": html_content
     }
     
