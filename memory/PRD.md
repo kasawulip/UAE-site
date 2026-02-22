@@ -75,9 +75,9 @@ Build a full-stack web-based appointment system for National ID Issuance. Applic
 - `POST /api/admin/login` - Admin login (returns JWT)
 - `GET /api/admin/appointments` - Get all appointments (protected)
 
-## Test Credentials
-- **Demo Admin**: username: admin, password: password
-- **Demo Viewer**: username: viewer, password: password
+## Auto-Created Admin Accounts
+
+The application automatically creates the following admin accounts on startup if they don't exist. This ensures accounts are available in fresh production deployments.
 
 ### Super Admin Account
 | Name | Username | Password | Role |
@@ -96,6 +96,14 @@ Build a full-stack web-based appointment system for National ID Issuance. Applic
 | Erina Zalwango | erina.zalwango | Admin@2026 |
 | Ceasar Kotevu | ceasar.kotevu | Admin@2026 |
 | Arthur Magooba | arthur.magooba | Admin@2026 |
+
+### Demo Accounts
+| Username | Password | Role |
+|----------|----------|------|
+| admin | password | admin |
+| viewer | password | viewer |
+
+**Note:** These accounts are defined in `backend/server.py` in the `DEFAULT_ADMIN_ACCOUNTS` list and are created automatically via the `startup_create_default_admins()` function.
 
 ## Key Files
 - `backend/server.py` - All backend API logic
