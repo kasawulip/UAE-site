@@ -585,7 +585,7 @@ const AppointmentForm = () => {
                 </div>
                 
                 <p className="text-sm text-slate-600 mt-4 text-center">
-                  Available days: Monday to Thursday (9:00 AM - 3:00 PM)
+                  Available days: Monday to Friday (9:00 AM - 3:00 PM). Public holidays are not available.
                 </p>
                 {selectedDate && (
                   <p className="text-sm font-medium text-amber-600 mt-2 text-center" data-testid="selected-date-display">
