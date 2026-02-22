@@ -131,7 +131,7 @@ class AdminUser(BaseModel):
     username: str
     email: EmailStr
     hashed_password: str
-    role: str = "viewer"  # viewer or admin
+    role: str = "viewer"  # viewer, admin, or superadmin
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class AdminCreate(BaseModel):
@@ -143,6 +143,13 @@ class AdminCreate(BaseModel):
 class AdminLogin(BaseModel):
     username: str
     password: str
+
+class AdminListResponse(BaseModel):
+    id: str
+    username: str
+    email: str
+    role: str
+    created_at: str
 
 class Token(BaseModel):
     access_token: str
