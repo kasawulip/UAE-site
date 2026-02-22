@@ -76,8 +76,16 @@ Build a full-stack web-based appointment system for National ID Issuance. Applic
 - `GET /api/admin/appointments` - Get all appointments (protected)
 
 ## Test Credentials
-- **Admin**: username: admin, password: password
-- **Viewer**: username: viewer, password: password
+- **Demo Admin**: username: admin, password: password
+- **Demo Viewer**: username: viewer, password: password
+
+### Staff Admin Accounts (Role: admin)
+| Name | Username | Password |
+|------|----------|----------|
+| Ashah Nabbanja | ashah.nabbanja | Admin@2026 |
+| Erina Zalwango | erina.zalwango | Admin@2026 |
+| Ceasar Kotevu | ceasar.kotevu | Admin@2026 |
+| Arthur Magooba | arthur.magooba | Admin@2026 |
 
 ## Key Files
 - `backend/server.py` - All backend API logic
