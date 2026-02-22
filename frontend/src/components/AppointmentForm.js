@@ -276,14 +276,25 @@ const AppointmentForm = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <header className="bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-slate-900 rounded-md flex items-center justify-center">
-              <ShieldCheck className="w-7 h-7 text-amber-500" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-slate-900 rounded-md flex items-center justify-center">
+                <ShieldCheck className="w-7 h-7 text-amber-500" />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">National ID Issuance</h1>
+                <p className="text-sm text-slate-600">Book Your Appointment</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900">National ID Issuance</h1>
-              <p className="text-sm text-slate-600">Book Your Appointment</p>
-            </div>
+            <Button
+              onClick={() => window.location.href = '/admin/login'}
+              variant="outline"
+              className="border-slate-300"
+              data-testid="admin-login-nav-btn"
+            >
+              <ShieldCheck className="w-4 h-4 mr-2" />
+              Admin Login
+            </Button>
           </div>
         </div>
       </header>
