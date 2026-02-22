@@ -286,20 +286,23 @@ const AppointmentForm = () => {
                 <p className="text-sm text-slate-600">Book Your Appointment</p>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Button
-                onClick={() => window.location.href = '/cancel'}
+                onClick={() => window.location.href = '/manage'}
                 variant="outline"
-                className="border-red-300 text-red-600 hover:bg-red-50"
-                data-testid="cancel-appointment-nav-btn"
+                size="sm"
+                className="border-amber-300 text-amber-700 hover:bg-amber-50 w-full sm:w-auto"
+                data-testid="manage-appointment-nav-btn"
               >
                 <XCircle className="w-4 h-4 mr-2" />
-                Cancel Appointment
+                <span className="hidden sm:inline">Cancel/Modify</span>
+                <span className="sm:hidden">Manage Appointment</span>
               </Button>
               <Button
                 onClick={() => window.location.href = '/admin/login'}
                 variant="outline"
-                className="border-slate-300"
+                size="sm"
+                className="border-slate-300 w-full sm:w-auto"
                 data-testid="admin-login-nav-btn"
               >
                 <ShieldCheck className="w-4 h-4 mr-2" />
