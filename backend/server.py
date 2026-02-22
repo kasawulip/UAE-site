@@ -543,6 +543,49 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Default admin accounts to create on startup
+DEFAULT_ADMIN_ACCOUNTS = [
+    # Superadmin
+    {"username": "paul.kasawuli", "email": "paul.kasawuli@nira.go.ug", "password": "SuperAdmin@2026", "role": "superadmin"},
+    # Staff Admins
+    {"username": "ashah.nabbanja", "email": "ashah.nabbanja@nira.go.ug", "password": "Admin@2026", "role": "admin"},
+    {"username": "erina.zalwango", "email": "erina.zalwango@nira.go.ug", "password": "Admin@2026", "role": "admin"},
+    {"username": "ceasar.kotevu", "email": "ceasar.kotevu@nira.go.ug", "password": "Admin@2026", "role": "admin"},
+    {"username": "arthur.magooba", "email": "arthur.magooba@nira.go.ug", "password": "Admin@2026", "role": "admin"},
+    # Demo accounts
+    {"username": "admin", "email": "admin@nira.go.ug", "password": "password", "role": "admin"},
+    {"username": "viewer", "email": "viewer@nira.go.ug", "password": "password", "role": "viewer"},
+]
+
+@app.on_event("startup")
+async def startup_create_default_admins():
+    """Create default admin accounts on application startup if they don't exist"""
+    logger.info("Checking and creating default admin accounts...")
+    
+    for account in DEFAULT_ADMIN_ACCOUNTS:
+        try:
+            # Check if user already exists
+            existing = await db.admins.find_one({"username": account["username"]}, {"_id": 0})
+            
+            if not existing:
+                # Create the admin account
+                admin_obj = {
+                    "id": str(uuid.uuid4()),
+                    "username": account["username"],
+                    "email": account["email"],
+                    "hashed_password": get_password_hash(account["password"]),
+                    "role": account["role"],
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.admins.insert_one(admin_obj)
+                logger.info(f"Created admin account: {account['username']} ({account['role']})")
+            else:
+                logger.info(f"Admin account already exists: {account['username']}")
+        except Exception as e:
+            logger.error(f"Error creating admin account {account['username']}: {str(e)}")
+    
+    logger.info("Admin account initialization complete.")
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
