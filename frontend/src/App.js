@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AppointmentForm from "@/components/AppointmentForm";
 import AdminDashboard from "@/components/AdminDashboard";
 import AdminLogin from "@/components/AdminLogin";
-import CancelAppointment from "@/components/CancelAppointment";
+import ManageAppointment from "@/components/ManageAppointment";
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
@@ -12,7 +12,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<AppointmentForm />} />
-          <Route path="/cancel" element={<CancelAppointment />} />
+          <Route path="/manage" element={<ManageAppointment />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
