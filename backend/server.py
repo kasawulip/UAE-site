@@ -386,6 +386,26 @@ async def create_appointment(appointment: AppointmentCreate):
     
     return appointment_obj
 
+@api_router.get("/appointments/lookup")
+async def lookup_appointment(nin: str, appointment_date: str):
+    """Public endpoint to lookup appointment by NIN and date (returns minimal info)"""
+    if not nin or not appointment_date:
+        raise HTTPException(status_code=400, detail="NIN and appointment date are required")
+    
+    appointment = await db.appointments.find_one({
+        "nin": nin,
+        "appointment_date": appointment_date
+    }, {"_id": 0})
+    
+    if not appointment:
+        raise HTTPException(
+            status_code=404, 
+            detail="No appointment found with this NIN for the specified date"
+        )
+    
+    # Return appointment data
+    return Appointment(**appointment)
+
 @api_router.get("/appointments", response_model=List[Appointment])
 async def get_appointments(current_admin: AdminUser = Depends(get_current_admin)):
     """Get all appointments (protected - admin only)"""
