@@ -1,15 +1,16 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
-
+import asyncio
+import resend
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -19,52 +20,195 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# Resend configuration
+resend.api_key = os.environ.get('RESEND_API_KEY')
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
+
 # Create the main app without a prefix
 app = FastAPI()
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
+class AppointmentCreate(BaseModel):
+    surname: str
+    firstname: str
+    nin: str
+    phone: str
+    email: EmailStr
+    location: str
+    appointment_date: str
+
+class Appointment(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    surname: str
+    firstname: str
+    nin: str
+    phone: str
+    email: str
+    location: str
+    appointment_date: str
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class SlotAvailability(BaseModel):
+    location: str
+    date: str
+    available_slots: int
+    total_slots: int
 
-# Add your routes to the router instead of directly to app
+# Helper function to send email
+async def send_confirmation_email(recipient_email: str, firstname: str, surname: str, location: str, appointment_date: str):
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background-color: #0F172A; color: white; padding: 20px; text-align: center; }}
+            .content {{ padding: 20px; background-color: #f9f9f9; }}
+            .footer {{ padding: 20px; text-align: center; font-size: 12px; color: #666; }}
+            .highlight {{ color: #D97706; font-weight: bold; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>National ID Appointment Confirmation</h1>
+            </div>
+            <div class="content">
+                <p>Dear {firstname} {surname},</p>
+                <p><strong>This is to confirm your appointment to pick your National ID.</strong></p>
+                <p>Your appointment details:</p>
+                <ul>
+                    <li><strong>Name:</strong> {firstname} {surname}</li>
+                    <li><strong>Location:</strong> <span class="highlight">{location}</span></li>
+                    <li><strong>Date:</strong> <span class="highlight">{appointment_date}</span></li>
+                    <li><strong>Time:</strong> 9:00 AM - 3:00 PM</li>
+                </ul>
+                <p>Please bring a valid form of identification and arrive during the scheduled time window.</p>
+                <p>If you need to make any changes, please contact our office.</p>
+            </div>
+            <div class="footer">
+                <p>National ID Issuance Department</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    params = {
+        "from": SENDER_EMAIL,
+        "to": [recipient_email],
+        "subject": "National ID Appointment Confirmation",
+        "html": html_content
+    }
+    
+    try:
+        email = await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"Email sent to {recipient_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send email: {str(e)}")
+        return False
+
+# Routes
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "National ID Appointment System API"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
+@api_router.get("/slots/{location}/{date}")
+async def get_slot_availability(location: str, date: str):
+    """Get available slots for a specific location and date"""
+    # Define slot limits
+    slot_limits = {
+        "Abu Dhabi": 200,
+        "Dubai": 100
+    }
     
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
+    if location not in slot_limits:
+        raise HTTPException(status_code=400, detail="Invalid location")
     
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
+    # Count existing appointments for this location and date
+    count = await db.appointments.count_documents({
+        "location": location,
+        "appointment_date": date
+    })
+    
+    total_slots = slot_limits[location]
+    available_slots = max(0, total_slots - count)
+    
+    return SlotAvailability(
+        location=location,
+        date=date,
+        available_slots=available_slots,
+        total_slots=total_slots
+    )
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
+@api_router.post("/appointments", response_model=Appointment)
+async def create_appointment(appointment: AppointmentCreate):
+    """Create a new appointment"""
+    # Validate location
+    if appointment.location not in ["Abu Dhabi", "Dubai"]:
+        raise HTTPException(status_code=400, detail="Invalid location. Must be 'Abu Dhabi' or 'Dubai'")
     
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
+    # Check if NIN already has an appointment for this date
+    existing = await db.appointments.find_one({
+        "nin": appointment.nin,
+        "appointment_date": appointment.appointment_date
+    }, {"_id": 0})
     
-    return status_checks
+    if existing:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"An appointment already exists for this NIN ({appointment.nin}) on {appointment.appointment_date}"
+        )
+    
+    # Check slot availability
+    slot_limits = {"Abu Dhabi": 200, "Dubai": 100}
+    count = await db.appointments.count_documents({
+        "location": appointment.location,
+        "appointment_date": appointment.appointment_date
+    })
+    
+    if count >= slot_limits[appointment.location]:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"No available slots for {appointment.location} on {appointment.appointment_date}"
+        )
+    
+    # Create appointment object
+    appointment_obj = Appointment(**appointment.model_dump())
+    doc = appointment_obj.model_dump()
+    
+    # Save to database
+    await db.appointments.insert_one(doc)
+    
+    # Send confirmation email
+    await send_confirmation_email(
+        recipient_email=appointment.email,
+        firstname=appointment.firstname,
+        surname=appointment.surname,
+        location=appointment.location,
+        appointment_date=appointment.appointment_date
+    )
+    
+    return appointment_obj
+
+@api_router.get("/appointments", response_model=List[Appointment])
+async def get_appointments():
+    """Get all appointments (for admin)"""
+    appointments = await db.appointments.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return appointments
 
 # Include the router in the main app
 app.include_router(api_router)
@@ -76,13 +220,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
