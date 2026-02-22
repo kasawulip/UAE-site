@@ -452,6 +452,13 @@ const ManageAppointment = () => {
             </div>
           )}
         </motion.div>
+        
+        {/* Help Section */}
+        {!completed && (
+          <div className="mt-6 text-center text-sm text-slate-600">
+            <p>Need help? Contact us at <a href="mailto:paul.kasawuli@nira.go.ug" className="text-amber-600 hover:text-amber-700 font-medium">paul.kasawuli@nira.go.ug</a></p>
+          </div>
+        )}
       </main>
     </div>
   );
