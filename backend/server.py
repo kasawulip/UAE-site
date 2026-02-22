@@ -313,8 +313,8 @@ async def get_slot_availability(location: str, date: str):
     """Get available slots for a specific location and date"""
     # Define slot limits
     slot_limits = {
-        "Abu Dhabi": 200,
-        "Dubai": 100
+        "Abu Dhabi": 150,
+        "Dubai": 80
     }
     
     if location not in slot_limits:
@@ -356,7 +356,7 @@ async def create_appointment(appointment: AppointmentCreate):
         )
     
     # Check slot availability
-    slot_limits = {"Abu Dhabi": 200, "Dubai": 100}
+    slot_limits = {"Abu Dhabi": 150, "Dubai": 80}
     count = await db.appointments.count_documents({
         "location": appointment.location,
         "appointment_date": appointment.appointment_date

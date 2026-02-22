@@ -7,7 +7,103 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { toast } from 'sonner';
-import { format, addDays, getDay, startOfDay } from 'date-fns';
+import { format, addDays, getDay, startOfDay, parseISO } from 'date-fns';
+
+// Public holidays for Uganda and UAE (2024-2026)
+const PUBLIC_HOLIDAYS = [
+  // Uganda Public Holidays 2024
+  '2024-01-01', // New Year's Day
+  '2024-01-26', // NRM Liberation Day
+  '2024-03-08', // International Women's Day
+  '2024-03-29', // Good Friday
+  '2024-04-01', // Easter Monday
+  '2024-04-10', // Eid al-Fitr (approximate)
+  '2024-05-01', // Labour Day
+  '2024-06-03', // Martyrs' Day
+  '2024-06-09', // National Heroes' Day
+  '2024-06-17', // Eid al-Adha (approximate)
+  '2024-10-09', // Independence Day
+  '2024-12-25', // Christmas Day
+  '2024-12-26', // Boxing Day
+  
+  // UAE Public Holidays 2024
+  '2024-01-01', // New Year's Day
+  '2024-04-10', // Eid al-Fitr
+  '2024-04-11', // Eid al-Fitr
+  '2024-04-12', // Eid al-Fitr
+  '2024-06-16', // Arafat Day
+  '2024-06-17', // Eid al-Adha
+  '2024-06-18', // Eid al-Adha
+  '2024-06-19', // Eid al-Adha
+  '2024-07-07', // Islamic New Year
+  '2024-09-15', // Prophet's Birthday
+  '2024-12-02', // UAE National Day
+  '2024-12-03', // UAE National Day
+  
+  // Uganda Public Holidays 2025
+  '2025-01-01', // New Year's Day
+  '2025-01-26', // NRM Liberation Day
+  '2025-03-08', // International Women's Day
+  '2025-03-30', // Eid al-Fitr (approximate)
+  '2025-04-18', // Good Friday
+  '2025-04-21', // Easter Monday
+  '2025-05-01', // Labour Day
+  '2025-06-03', // Martyrs' Day
+  '2025-06-06', // Eid al-Adha (approximate)
+  '2025-06-09', // National Heroes' Day
+  '2025-10-09', // Independence Day
+  '2025-12-25', // Christmas Day
+  '2025-12-26', // Boxing Day
+  
+  // UAE Public Holidays 2025
+  '2025-01-01', // New Year's Day
+  '2025-03-30', // Eid al-Fitr
+  '2025-03-31', // Eid al-Fitr
+  '2025-04-01', // Eid al-Fitr
+  '2025-06-05', // Arafat Day
+  '2025-06-06', // Eid al-Adha
+  '2025-06-07', // Eid al-Adha
+  '2025-06-08', // Eid al-Adha
+  '2025-06-26', // Islamic New Year
+  '2025-09-04', // Prophet's Birthday
+  '2025-12-02', // UAE National Day
+  '2025-12-03', // UAE National Day
+  
+  // Uganda Public Holidays 2026
+  '2026-01-01', // New Year's Day
+  '2026-01-26', // NRM Liberation Day
+  '2026-03-08', // International Women's Day
+  '2026-03-20', // Eid al-Fitr (approximate)
+  '2026-04-03', // Good Friday
+  '2026-04-06', // Easter Monday
+  '2026-05-01', // Labour Day
+  '2026-05-27', // Eid al-Adha (approximate)
+  '2026-06-03', // Martyrs' Day
+  '2026-06-09', // National Heroes' Day
+  '2026-10-09', // Independence Day
+  '2026-12-25', // Christmas Day
+  '2026-12-26', // Boxing Day
+  
+  // UAE Public Holidays 2026
+  '2026-01-01', // New Year's Day
+  '2026-03-20', // Eid al-Fitr
+  '2026-03-21', // Eid al-Fitr
+  '2026-03-22', // Eid al-Fitr
+  '2026-05-26', // Arafat Day
+  '2026-05-27', // Eid al-Adha
+  '2026-05-28', // Eid al-Adha
+  '2026-05-29', // Eid al-Adha
+  '2026-06-16', // Islamic New Year
+  '2026-08-25', // Prophet's Birthday
+  '2026-12-02', // UAE National Day
+  '2026-12-03', // UAE National Day
+];
+
+// Helper function to check if a date is a public holiday
+const isPublicHoliday = (date) => {
+  const dateStr = format(date, 'yyyy-MM-dd');
+  return PUBLIC_HOLIDAYS.includes(dateStr);
+};
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -212,14 +308,17 @@ const AppointmentForm = () => {
     }
   };
 
-  // Matcher for calendar - disable weekends and past dates
+  // Matcher for calendar - disable weekends, public holidays, and past dates
   const disabledMatcher = (date) => {
     const day = getDay(date);
-    // Disable Friday (5), Saturday (6), Sunday (0)
-    if (day === 0 || day === 5 || day === 6) return true;
+    // Disable Saturday (6) and Sunday (0) - Allow Monday to Friday
+    if (day === 0 || day === 6) return true;
     
     // Disable past dates
     if (date < startOfDay(new Date())) return true;
+    
+    // Disable public holidays (Uganda and UAE)
+    if (isPublicHoliday(date)) return true;
     
     // Disable dates with no slots
     const isDisabled = disabledDates.some(disabledDate => 
@@ -431,7 +530,7 @@ const AppointmentForm = () => {
                   </div>
                   <div className="p-4">
                     <h3 className="text-lg font-semibold text-slate-900">Abu Dhabi</h3>
-                    <p className="text-sm text-slate-600 mt-1">200 slots available daily</p>
+                    <p className="text-sm text-slate-600 mt-1">150 slots available daily</p>
                   </div>
                 </motion.div>
                 
@@ -454,7 +553,7 @@ const AppointmentForm = () => {
                   </div>
                   <div className="p-4">
                     <h3 className="text-lg font-semibold text-slate-900">Dubai</h3>
-                    <p className="text-sm text-slate-600 mt-1">100 slots available daily</p>
+                    <p className="text-sm text-slate-600 mt-1">80 slots available daily</p>
                   </div>
                 </motion.div>
               </div>
