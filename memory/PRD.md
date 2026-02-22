@@ -79,6 +79,16 @@ Build a full-stack web-based appointment system for National ID Issuance. Applic
 - **Demo Admin**: username: admin, password: password
 - **Demo Viewer**: username: viewer, password: password
 
+### Super Admin Account
+| Name | Username | Password | Role |
+|------|----------|----------|------|
+| Paul Kasawuli | paul.kasawuli | SuperAdmin@2026 | superadmin |
+
+**Superadmin Capabilities:**
+- View all admin users (`GET /api/admin/users`)
+- Create new admin/viewer users (`POST /api/admin/users`)
+- Delete admin/viewer users (`DELETE /api/admin/users/{username}`)
+
 ### Staff Admin Accounts (Role: admin)
 | Name | Username | Password |
 |------|----------|----------|
