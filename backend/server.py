@@ -392,6 +392,42 @@ async def get_appointments(current_admin: AdminUser = Depends(get_current_admin)
     appointments = await db.appointments.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
     return appointments
 
+@api_router.delete("/appointments/cancel")
+async def cancel_appointment(nin: str, appointment_date: str):
+    """Cancel an appointment by NIN and date"""
+    if not nin or not appointment_date:
+        raise HTTPException(status_code=400, detail="NIN and appointment date are required")
+    
+    # Find the appointment
+    appointment = await db.appointments.find_one({
+        "nin": nin,
+        "appointment_date": appointment_date
+    }, {"_id": 0})
+    
+    if not appointment:
+        raise HTTPException(
+            status_code=404, 
+            detail="No appointment found with this NIN for the specified date"
+        )
+    
+    # Delete the appointment
+    result = await db.appointments.delete_one({
+        "nin": nin,
+        "appointment_date": appointment_date
+    })
+    
+    if result.deleted_count == 1:
+        return {
+            "message": "Appointment cancelled successfully",
+            "cancelled_appointment": {
+                "name": f"{appointment['firstname']} {appointment['surname']}",
+                "location": appointment['location'],
+                "date": appointment['appointment_date']
+            }
+        }
+    else:
+        raise HTTPException(status_code=500, detail="Failed to cancel appointment")
+
 # Include the router in the main app
 app.include_router(api_router)
 
