@@ -243,6 +243,55 @@ async def send_confirmation_email(recipient_email: str, firstname: str, surname:
 async def root():
     return {"message": "National ID Appointment System API"}
 
+# Admin Authentication Routes
+@api_router.post("/admin/register", response_model=AdminUser)
+async def register_admin(admin: AdminCreate):
+    """Register a new admin (for initial setup only)"""
+    # Check if username exists
+    existing = await db.admins.find_one({"username": admin.username}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already registered")
+    
+    # Create admin
+    admin_obj = AdminUser(
+        username=admin.username,
+        email=admin.email,
+        hashed_password=get_password_hash(admin.password),
+        role=admin.role
+    )
+    
+    doc = admin_obj.model_dump()
+    await db.admins.insert_one(doc)
+    
+    # Return without password
+    return admin_obj
+
+@api_router.post("/admin/login", response_model=Token)
+async def login_admin(credentials: AdminLogin):
+    """Admin login"""
+    admin = await db.admins.find_one({"username": credentials.username}, {"_id": 0})
+    
+    if not admin or not verify_password(credentials.password, admin['hashed_password']):
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": admin['username'], "role": admin['role']},
+        expires_delta=access_token_expires
+    )
+    
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        role=admin['role'],
+        username=admin['username']
+    )
+
+@api_router.get("/admin/me", response_model=AdminUser)
+async def get_current_admin_info(current_admin: AdminUser = Depends(get_current_admin)):
+    """Get current admin info"""
+    return current_admin
+
 @api_router.get("/slots/{location}/{date}")
 async def get_slot_availability(location: str, date: str):
     """Get available slots for a specific location and date"""
