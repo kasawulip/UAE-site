@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { Calendar, MapPin, User, Mail, Phone, ShieldCheck, CheckCircle, Loader2, XCircle } from 'lucide-react';
+import { Calendar, MapPin, User, Mail, Phone, ShieldCheck, CheckCircle, Loader2, XCircle, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { toast } from 'sonner';
 import { format, addDays, getDay, startOfDay, parseISO } from 'date-fns';
+import jsPDF from 'jspdf';
 
 // Public holidays for Uganda and UAE (2024-2026)
 const PUBLIC_HOLIDAYS = [
