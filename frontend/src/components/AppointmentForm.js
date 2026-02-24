@@ -513,11 +513,11 @@ const AppointmentForm = () => {
           </div>
           
           <Button 
-            onClick={() => window.location.reload()} 
+            onClick={() => window.location.href = '/'} 
             className="w-full bg-slate-900 hover:bg-slate-800"
-            data-testid="book-another-btn"
+            data-testid="back-to-home-btn"
           >
-            Book Another Appointment
+            Back to Home
           </Button>
         </div>
       </motion.div>
