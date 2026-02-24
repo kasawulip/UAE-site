@@ -340,6 +340,134 @@ const AppointmentForm = () => {
     }
   };
 
+  // Generate and download PDF confirmation letter
+  const generateConfirmationPDF = useCallback((appointmentData) => {
+    const doc = new jsPDF();
+    
+    const venue = appointmentData.location === "Abu Dhabi" 
+      ? "Uganda Embassy, Abu Dhabi" 
+      : "Uganda Consulate, Dubai";
+    
+    const formattedDate = format(new Date(appointmentData.appointment_date), 'EEEE, MMMM d, yyyy');
+    
+    // Set up colors
+    const headerColor = [15, 23, 42]; // slate-900
+    const accentColor = [217, 119, 6]; // amber-600
+    const textColor = [51, 51, 51];
+    
+    // Header background
+    doc.setFillColor(...headerColor);
+    doc.rect(0, 0, 210, 45, 'F');
+    
+    // Header text
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('National ID Appointment', 105, 22, { align: 'center' });
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Confirmation Letter', 105, 32, { align: 'center' });
+    
+    // Reset text color
+    doc.setTextColor(...textColor);
+    
+    // Main content
+    let y = 60;
+    
+    // Greeting
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Dear ${appointmentData.firstname} ${appointmentData.surname},`, 20, y);
+    
+    y += 15;
+    doc.text('Thank you for booking your National ID Issuance Appointment.', 20, y);
+    
+    // Info box
+    y += 20;
+    doc.setFillColor(249, 249, 249);
+    doc.roundedRect(20, y - 5, 170, 50, 3, 3, 'F');
+    
+    // Left border accent
+    doc.setFillColor(...accentColor);
+    doc.rect(20, y - 5, 4, 50, 'F');
+    
+    y += 10;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Appointment Details:', 30, y);
+    
+    y += 12;
+    doc.setFont('helvetica', 'normal');
+    doc.text('Venue:', 30, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(venue, 55, y);
+    
+    y += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.text('Date:', 30, y);
+    doc.setTextColor(...accentColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text(formattedDate, 55, y);
+    
+    y += 10;
+    doc.setTextColor(...textColor);
+    doc.setFont('helvetica', 'normal');
+    doc.text('NIN:', 30, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(appointmentData.nin, 55, y);
+    
+    // Important note
+    y += 25;
+    doc.setTextColor(...textColor);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Please note that our work hours are between 9am to 1pm', 20, y);
+    
+    y += 15;
+    doc.setFont('helvetica', 'normal');
+    doc.text('If you need to reschedule, you can go back to the booking page and choose', 20, y);
+    y += 7;
+    doc.text('another date.', 20, y);
+    
+    // Closing
+    y += 25;
+    doc.text('Warm regards,', 20, y);
+    y += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('NIRA Diaspora Desk for Middle East', 20, y);
+    
+    // Footer
+    doc.setFillColor(240, 240, 240);
+    doc.rect(0, 270, 210, 30, 'F');
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text('This is an automated confirmation. For inquiries, contact paul.kasawuli@nira.go.ug', 105, 280, { align: 'center' });
+    doc.text(`Generated on ${format(new Date(), 'MMMM d, yyyy')} | Reference: ${appointmentData.nin}`, 105, 287, { align: 'center' });
+    
+    // Save the PDF
+    const fileName = `NIRA_Appointment_${appointmentData.nin}_${appointmentData.appointment_date}.pdf`;
+    doc.save(fileName);
+    
+    return fileName;
+  }, []);
+
+  // Auto-download PDF when appointment is successfully submitted
+  useEffect(() => {
+    if (submitted && formData.firstname && formData.appointment_date) {
+      // Small delay to ensure the success screen renders first
+      const timer = setTimeout(() => {
+        try {
+          const fileName = generateConfirmationPDF(formData);
+          toast.success(`Confirmation letter downloaded: ${fileName}`);
+        } catch (error) {
+          console.error('PDF generation error:', error);
+          toast.error('Could not generate PDF. Please use the download button.');
+        }
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [submitted, formData, generateConfirmationPDF]);
+
   if (submitted) {
     return (
       <motion.div
@@ -347,19 +475,43 @@ const AppointmentForm = () => {
         animate={{ opacity: 1, scale: 1 }}
         className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4"
       >
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 sm:p-8 text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-10 h-10 text-green-600" />
           </div>
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">Appointment Confirmed!</h2>
-          <p className="text-slate-600 mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Appointment Confirmed!</h2>
+          <p className="text-sm sm:text-base text-slate-600 mb-6">
             Your appointment has been successfully booked. A confirmation email has been sent to <strong>{formData.email}</strong>.
           </p>
-          <div className="bg-slate-50 rounded-md p-4 mb-6 text-left">
+          <div className="bg-slate-50 rounded-md p-4 mb-4 text-left">
             <p className="text-sm text-slate-600 mb-1"><strong>Name:</strong> {formData.firstname} {formData.surname}</p>
+            <p className="text-sm text-slate-600 mb-1"><strong>NIN:</strong> {formData.nin}</p>
             <p className="text-sm text-slate-600 mb-1"><strong>Location:</strong> {formData.location}</p>
             <p className="text-sm text-slate-600"><strong>Date:</strong> {format(new Date(formData.appointment_date), 'EEEE, MMMM d, yyyy')}</p>
           </div>
+          
+          {/* PDF Download Section */}
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-6">
+            <p className="text-sm text-amber-800 mb-3">
+              Your confirmation letter should download automatically. If not, click below:
+            </p>
+            <Button 
+              onClick={() => {
+                try {
+                  generateConfirmationPDF(formData);
+                  toast.success('Confirmation letter downloaded!');
+                } catch (error) {
+                  toast.error('Failed to generate PDF');
+                }
+              }}
+              className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+              data-testid="download-pdf-btn"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download Confirmation Letter (PDF)
+            </Button>
+          </div>
+          
           <Button 
             onClick={() => window.location.reload()} 
             className="w-full bg-slate-900 hover:bg-slate-800"
