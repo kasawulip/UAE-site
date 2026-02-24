@@ -261,6 +261,64 @@ async def send_confirmation_email(recipient_email: str, firstname: str, surname:
         logger.error(f"Failed to send email: {str(e)}")
         return False
 
+# Helper function to send rejection email
+async def send_rejection_email(recipient_email: str, firstname: str, surname: str):
+    """Send rejection email when admin rejects an appointment"""
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.8; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background-color: #0F172A; color: white; padding: 20px; text-align: center; }}
+            .content {{ padding: 30px; background-color: #f9f9f9; }}
+            .footer {{ padding: 20px; text-align: center; font-size: 12px; color: #666; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>National ID Card Collection</h1>
+            </div>
+            <div class="content">
+                <p>Dear Sir/Madam,</p>
+                
+                <p>Thank you for your appointment request regarding the collection of your National Identification Card.</p>
+                
+                <p>We regret to inform you that your card is not yet available for collection at this time. Please be assured that the processing of your card is ongoing and is being actively worked upon.</p>
+                
+                <p>We kindly request that you check again after one (1) month to confirm its availability. Once the card is ready, you will be able to book a new appointment for collection.</p>
+                
+                <p>We appreciate your patience and understanding and thank you for your continued cooperation.</p>
+                
+                <p style="margin-top: 30px;">Yours faithfully,</p>
+                <p><strong>Embassy of the Republic of Uganda, UAE</strong></p>
+            </div>
+            <div class="footer">
+                <p>This is an automated message. For inquiries, please contact paul.kasawuli@nira.go.ug</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    params = {
+        "from": SENDER_EMAIL,
+        "to": [recipient_email],
+        "subject": "National ID Card Collection - Update on Your Appointment",
+        "html": html_content
+    }
+    
+    try:
+        email = await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"Rejection email sent to {recipient_email}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send rejection email: {str(e)}")
+        return False
+
 # Routes
 @api_router.get("/")
 async def root():
