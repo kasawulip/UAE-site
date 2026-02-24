@@ -524,6 +524,20 @@ const AdminDashboard = () => {
                             </span>
                           </div>
                         </td>
+                        {adminInfo?.role !== 'viewer' && (
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Button
+                              onClick={() => handleRejectAppointment(appointment)}
+                              variant="outline"
+                              size="sm"
+                              className="border-red-300 text-red-600 hover:bg-red-50"
+                              data-testid={`reject-btn-${index}`}
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Reject
+                            </Button>
+                          </td>
+                        )}
                       </motion.tr>
                     ))
                   )}
