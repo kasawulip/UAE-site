@@ -465,12 +465,15 @@ const AdminDashboard = () => {
                     <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Contact</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Location</th>
                     <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Date</th>
+                    {adminInfo?.role !== 'viewer' && (
+                      <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Actions</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {filteredAppointments.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-12 text-center text-slate-500">
+                      <td colSpan={adminInfo?.role !== 'viewer' ? 6 : 5} className="px-6 py-12 text-center text-slate-500">
                         No appointments found
                       </td>
                     </tr>
