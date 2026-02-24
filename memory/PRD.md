@@ -69,11 +69,15 @@ Build a full-stack web-based appointment system for National ID Issuance. Applic
 
 ## API Endpoints
 - `POST /api/appointments` - Create new appointment
-- `DELETE /api/appointments/cancel` - Cancel appointment
+- `DELETE /api/appointments/cancel` - Cancel appointment (public)
 - `GET /api/appointments/lookup` - Public lookup by NIN and date
 - `GET /api/slots/{location}/{date}` - Get slot availability
 - `POST /api/admin/login` - Admin login (returns JWT)
 - `GET /api/admin/appointments` - Get all appointments (protected)
+- `POST /api/admin/appointments/reject` - Reject appointment and send email (admin/superadmin only)
+- `GET /api/admin/users` - List all admins (superadmin only)
+- `POST /api/admin/users` - Create admin user (superadmin only)
+- `DELETE /api/admin/users/{username}` - Delete admin user (superadmin only)
 
 ## Auto-Created Admin Accounts
 
