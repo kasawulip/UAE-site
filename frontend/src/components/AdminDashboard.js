@@ -68,6 +68,41 @@ const AdminDashboard = () => {
     navigate('/admin/login');
   };
 
+  // Reject appointment function
+  const handleRejectAppointment = async (appointment) => {
+    if (adminInfo?.role === 'viewer') {
+      toast.error('Viewers cannot reject appointments');
+      return;
+    }
+
+    const confirmReject = window.confirm(
+      `Are you sure you want to reject the appointment for ${appointment.firstname} ${appointment.surname}?\n\nThis will send a rejection email to ${appointment.email} informing them that their National ID card is not yet available.`
+    );
+
+    if (!confirmReject) return;
+
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await axios.post(
+        `${API}/admin/appointments/reject`,
+        { appointment_id: appointment.id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.email_sent) {
+        toast.success(`Appointment rejected. Rejection email sent to ${appointment.email}`);
+      } else {
+        toast.warning('Appointment rejected but email could not be sent');
+      }
+
+      // Refresh appointments list
+      await fetchAppointments(token);
+    } catch (error) {
+      console.error('Error rejecting appointment:', error);
+      toast.error(error.response?.data?.detail || 'Failed to reject appointment');
+    }
+  };
+
   // Apply filters and search
   const filteredAppointments = appointments.filter(apt => {
     // Location filter
