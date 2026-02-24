@@ -14,9 +14,9 @@
   background-image: url('https://customer-assets.emergentagent.com/job_1c908d0c-72da-4183-bc8b-e5c6ffd6283e/artifacts/l1heptdx_byrev-dirt-88534_1920.jpg');
   background-position: right center;
   background-repeat: no-repeat;
-  background-size: 50% auto;
+  background-size: 55% auto;
   background-attachment: fixed;
-  opacity: 0.08;
+  opacity: 0.12;
   position: fixed;
   top: 0;
   left: 0;
@@ -34,7 +34,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(to right, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 60%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(to right, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0) 100%);
   pointer-events: none;
 }
 
