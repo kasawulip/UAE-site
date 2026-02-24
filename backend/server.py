@@ -554,6 +554,52 @@ async def get_appointments(
     ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     return appointments
 
+# Model for rejection request
+class RejectAppointmentRequest(BaseModel):
+    appointment_id: str
+    
+@api_router.post("/admin/appointments/reject")
+async def reject_appointment(
+    request: RejectAppointmentRequest,
+    current_admin: AdminUser = Depends(get_current_admin)
+):
+    """Reject an appointment (admin only) - sends rejection email to applicant"""
+    # Only admin and superadmin can reject (not viewer)
+    if current_admin.role == "viewer":
+        raise HTTPException(status_code=403, detail="Viewers cannot reject appointments")
+    
+    # Find the appointment by ID
+    appointment = await db.appointments.find_one({"id": request.appointment_id}, {"_id": 0})
+    
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    
+    # Delete the appointment
+    result = await db.appointments.delete_one({"id": request.appointment_id})
+    
+    if result.deleted_count == 1:
+        # Send rejection email to the applicant
+        email_sent = await send_rejection_email(
+            recipient_email=appointment['email'],
+            firstname=appointment['firstname'],
+            surname=appointment['surname']
+        )
+        
+        return {
+            "message": "Appointment rejected successfully",
+            "email_sent": email_sent,
+            "rejected_appointment": {
+                "name": f"{appointment['firstname']} {appointment['surname']}",
+                "nin": appointment['nin'],
+                "email": appointment['email'],
+                "location": appointment['location'],
+                "date": appointment['appointment_date']
+            },
+            "rejected_by": current_admin.username
+        }
+    else:
+        raise HTTPException(status_code=500, detail="Failed to reject appointment")
+
 @api_router.delete("/appointments/cancel")
 async def cancel_appointment(nin: str, appointment_date: str):
     """Cancel an appointment by NIN and date"""
