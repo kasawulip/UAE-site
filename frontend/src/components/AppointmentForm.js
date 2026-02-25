@@ -732,7 +732,7 @@ const AppointmentForm = () => {
                     selected={selectedDate}
                     onSelect={handleDateSelect}
                     disabled={disabledMatcher}
-                    fromDate={new Date('2026-03-02')}
+                    fromDate={new Date('2026-03-04')}
                     className="rounded-md border shadow" 
                     data-testid="appointment-calendar"
                   />
@@ -741,7 +741,7 @@ const AppointmentForm = () => {
                 <p className="text-sm text-slate-600 mt-4 text-center">
                   Available days: Monday to Friday (9:00 AM - 3:00 PM). Public holidays are not available.
                   <br />
-                  <span className="text-amber-600 font-medium">Appointments start from March 2, 2026.</span>
+                  <span className="text-amber-600 font-medium">Appointments start from March 4, 2026.</span>
                 </p>
                 {selectedDate && (
                   <p className="text-sm font-medium text-amber-600 mt-2 text-center" data-testid="selected-date-display">
