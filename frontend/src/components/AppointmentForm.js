@@ -74,6 +74,7 @@ const PUBLIC_HOLIDAYS = [
   '2026-01-01', // New Year's Day
   '2026-01-26', // NRM Liberation Day
   '2026-03-08', // International Women's Day
+  '2026-03-19', // Office Closed
   '2026-03-20', // Eid al-Fitr (approximate)
   '2026-04-03', // Good Friday
   '2026-04-06', // Easter Monday
