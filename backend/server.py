@@ -663,7 +663,21 @@ DEFAULT_ADMIN_ACCOUNTS = [
 
 @app.on_event("startup")
 async def startup_create_default_admins():
-    """Create default admin accounts on application startup if they don't exist"""
+    """Create default admin accounts and database indexes on application startup"""
+    
+    # Create unique compound index on NIN + appointment_date to prevent race conditions
+    logger.info("Creating database indexes...")
+    try:
+        await db.appointments.create_index(
+            [("nin", 1), ("appointment_date", 1)],
+            unique=True,
+            name="unique_nin_date"
+        )
+        logger.info("Created unique index on appointments (nin + appointment_date)")
+    except Exception as e:
+        # Index might already exist, which is fine
+        logger.info(f"Index creation note: {str(e)}")
+    
     logger.info("Checking and creating default admin accounts...")
     
     for account in DEFAULT_ADMIN_ACCOUNTS:
