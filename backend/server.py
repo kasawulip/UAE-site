@@ -506,8 +506,14 @@ async def create_appointment(appointment: AppointmentCreate):
     appointment_obj = Appointment(**appointment.model_dump())
     doc = appointment_obj.model_dump()
     
-    # Save to database
-    await db.appointments.insert_one(doc)
+    # Save to database - unique index prevents duplicate NIN+date even with concurrent requests
+    try:
+        await db.appointments.insert_one(doc)
+    except DuplicateKeyError:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"An appointment already exists for NIN {appointment.nin} on {appointment.appointment_date}"
+        )
     
     # Send confirmation email
     await send_confirmation_email(
