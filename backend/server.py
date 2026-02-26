@@ -477,16 +477,17 @@ async def create_appointment(appointment: AppointmentCreate):
     if appointment.location not in ["Abu Dhabi", "Dubai"]:
         raise HTTPException(status_code=400, detail="Invalid location. Must be 'Abu Dhabi' or 'Dubai'")
     
-    # Check if NIN already has an appointment for this date
+    # Check if NIN already has ANY active appointment in the system
     existing = await db.appointments.find_one({
-        "nin": appointment.nin,
-        "appointment_date": appointment.appointment_date
+        "nin": appointment.nin
     }, {"_id": 0})
     
     if existing:
+        existing_date = existing.get('appointment_date', 'Unknown date')
+        existing_location = existing.get('location', 'Unknown location')
         raise HTTPException(
             status_code=400, 
-            detail=f"An appointment already exists for this NIN ({appointment.nin}) on {appointment.appointment_date}"
+            detail=f"Booking rejected: You already have a confirmed appointment under this NIN. Your existing appointment is scheduled for {existing_date} at {existing_location}. Please cancel your existing appointment to make a new booking."
         )
     
     # Check slot availability
@@ -506,13 +507,17 @@ async def create_appointment(appointment: AppointmentCreate):
     appointment_obj = Appointment(**appointment.model_dump())
     doc = appointment_obj.model_dump()
     
-    # Save to database - unique index prevents duplicate NIN+date even with concurrent requests
+    # Save to database - unique index on NIN prevents duplicates even with concurrent requests
     try:
         await db.appointments.insert_one(doc)
     except DuplicateKeyError:
+        # Race condition: another request created an appointment for this NIN
+        existing = await db.appointments.find_one({"nin": appointment.nin}, {"_id": 0})
+        existing_date = existing.get('appointment_date', 'Unknown date') if existing else 'Unknown date'
+        existing_location = existing.get('location', 'Unknown location') if existing else 'Unknown location'
         raise HTTPException(
             status_code=400, 
-            detail=f"An appointment already exists for NIN {appointment.nin} on {appointment.appointment_date}"
+            detail=f"Booking rejected: You already have a confirmed appointment under this NIN. Your existing appointment is scheduled for {existing_date} at {existing_location}. Please cancel your existing appointment to make a new booking."
         )
     
     # Send confirmation email
