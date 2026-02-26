@@ -677,15 +677,24 @@ DEFAULT_ADMIN_ACCOUNTS = [
 async def startup_create_default_admins():
     """Create default admin accounts and database indexes on application startup"""
     
-    # Create unique compound index on NIN + appointment_date to prevent race conditions
+    # Drop old index if exists and create unique index on NIN only
+    # This enforces "one active appointment per NIN" at the database level
     logger.info("Creating database indexes...")
     try:
+        # Try to drop the old compound index if it exists
+        try:
+            await db.appointments.drop_index("unique_nin_date")
+            logger.info("Dropped old compound index (nin + appointment_date)")
+        except Exception:
+            pass  # Index might not exist
+        
+        # Create new unique index on NIN only
         await db.appointments.create_index(
-            [("nin", 1), ("appointment_date", 1)],
+            [("nin", 1)],
             unique=True,
-            name="unique_nin_date"
+            name="unique_nin"
         )
-        logger.info("Created unique index on appointments (nin + appointment_date)")
+        logger.info("Created unique index on appointments (nin) - enforces one active appointment per NIN")
     except Exception as e:
         # Index might already exist, which is fine
         logger.info(f"Index creation note: {str(e)}")
