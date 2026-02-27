@@ -44,7 +44,8 @@ const AdminDashboard = () => {
 
   const fetchAppointments = async (token) => {
     try {
-      const response = await axios.get(`${API}/appointments`, {
+      // Fetch all appointments (limit=0 means no limit)
+      const response = await axios.get(`${API}/appointments?limit=0`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAppointments(response.data);
