@@ -555,15 +555,22 @@ async def lookup_appointment(nin: str, appointment_date: str):
 async def get_appointments(
     current_admin: AdminUser = Depends(get_current_admin),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 0
 ):
-    """Get all appointments (protected - admin only) with pagination"""
-    # Enforce max limit to prevent performance issues
-    limit = min(limit, 500)
-    appointments = await db.appointments.find(
-        {}, 
-        {"_id": 0}
-    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    """Get all appointments (protected - admin only). Set limit=0 to get all."""
+    if limit == 0:
+        # Get all appointments (no limit)
+        appointments = await db.appointments.find(
+            {}, 
+            {"_id": 0}
+        ).sort("created_at", -1).to_list(None)
+    else:
+        # Apply pagination with max limit of 1000
+        limit = min(limit, 1000)
+        appointments = await db.appointments.find(
+            {}, 
+            {"_id": 0}
+        ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     return appointments
 
 # Model for rejection request
