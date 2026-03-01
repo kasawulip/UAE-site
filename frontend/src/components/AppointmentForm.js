@@ -737,8 +737,19 @@ const AppointmentForm = () => {
                   />
                   {errors.firstname && <p className="text-red-500 text-sm mt-1" data-testid="firstname-error">{errors.firstname}</p>}
                 </div>
-                
-                <div>
+              </div>
+              
+              {/* Name Entry Guidance */}
+              <div className="mt-3 flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-md">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm text-blue-700">
+                  <span className="font-medium">Important:</span> Please enter your name exactly as it appears on your National ID card. This ensures your appointment matches your identification documents.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                   <Label htmlFor="nin" className="text-sm font-medium text-slate-700 mb-2 block">NIN Number *</Label>
                   <Input
                     id="nin"
