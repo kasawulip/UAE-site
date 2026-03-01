@@ -750,6 +750,7 @@ const AppointmentForm = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div>
                   <Label htmlFor="nin" className="text-sm font-medium text-slate-700 mb-2 block">NIN Number *</Label>
                   <Input
                     id="nin"
