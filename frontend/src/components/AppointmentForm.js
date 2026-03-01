@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { Calendar, MapPin, User, Mail, Phone, ShieldCheck, CheckCircle, Loader2, XCircle, Download } from 'lucide-react';
+import { Calendar, MapPin, User, Mail, Phone, ShieldCheck, CheckCircle, Loader2, XCircle, Download, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
