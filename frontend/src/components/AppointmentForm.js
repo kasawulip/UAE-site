@@ -342,7 +342,7 @@ const AppointmentForm = () => {
   };
 
   // Generate and download PDF confirmation letter
-  const generateConfirmationPDF = useCallback((appointmentData) => {
+  const generateConfirmationPDF = useCallback((appointmentData, forceDownload = false) => {
     const doc = new jsPDF();
     
     const venue = appointmentData.location === "Abu Dhabi" 
@@ -444,11 +444,37 @@ const AppointmentForm = () => {
     doc.text('This is an automated confirmation. For inquiries, contact paul.kasawuli@nira.go.ug', 105, 280, { align: 'center' });
     doc.text(`Generated on ${format(new Date(), 'MMMM d, yyyy')} | Reference: ${appointmentData.nin}`, 105, 287, { align: 'center' });
     
-    // Save the PDF
+    // Generate filename
     const fileName = `NIRA_Appointment_${appointmentData.nin}_${appointmentData.appointment_date}.pdf`;
-    doc.save(fileName);
     
-    return fileName;
+    // Use blob-based download for better mobile/browser compatibility
+    try {
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      link.style.display = 'none';
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up after a short delay
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      }, 100);
+      
+      return fileName;
+    } catch (blobError) {
+      console.error('Blob download failed, trying direct save:', blobError);
+      // Fallback to direct save method
+      doc.save(fileName);
+      return fileName;
+    }
   }, []);
 
   // Auto-download PDF when appointment is successfully submitted
