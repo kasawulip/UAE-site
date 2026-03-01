@@ -520,23 +520,122 @@ const AppointmentForm = () => {
           {/* PDF Download Section */}
           <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-6">
             <p className="text-sm text-amber-800 mb-3">
-              Your confirmation letter should download automatically. If not, click below:
+              Your confirmation letter should download automatically. If not, use the buttons below:
             </p>
-            <Button 
-              onClick={() => {
-                try {
-                  generateConfirmationPDF(formData);
-                  toast.success('Confirmation letter downloaded!');
-                } catch (error) {
-                  toast.error('Failed to generate PDF');
-                }
-              }}
-              className="w-full bg-amber-600 hover:bg-amber-700 text-white"
-              data-testid="download-pdf-btn"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download Confirmation Letter (PDF)
-            </Button>
+            <div className="space-y-2">
+              <Button 
+                onClick={() => {
+                  try {
+                    generateConfirmationPDF(formData);
+                    toast.success('Confirmation letter downloaded!');
+                  } catch (error) {
+                    console.error('PDF download error:', error);
+                    toast.error('Download failed. Try "Open PDF" button below.');
+                  }
+                }}
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+                data-testid="download-pdf-btn"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Confirmation Letter (PDF)
+              </Button>
+              
+              {/* Alternative: Open PDF in new tab */}
+              <Button 
+                onClick={() => {
+                  try {
+                    const doc = new jsPDF();
+                    const venue = formData.location === "Abu Dhabi" 
+                      ? "Uganda Embassy, Abu Dhabi" 
+                      : "Uganda Consulate, Dubai";
+                    const formattedDate = format(new Date(formData.appointment_date), 'EEEE, MMMM d, yyyy');
+                    
+                    // Header
+                    doc.setFillColor(15, 23, 42);
+                    doc.rect(0, 0, 210, 45, 'F');
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(22);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('National ID Appointment', 105, 22, { align: 'center' });
+                    doc.setFontSize(14);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text('Confirmation Letter', 105, 32, { align: 'center' });
+                    
+                    // Content
+                    doc.setTextColor(51, 51, 51);
+                    let y = 60;
+                    doc.setFontSize(12);
+                    doc.text(`Dear ${formData.firstname} ${formData.surname},`, 20, y);
+                    y += 15;
+                    doc.text('Thank you for booking your National ID Issuance Appointment.', 20, y);
+                    
+                    // Info box
+                    y += 20;
+                    doc.setFillColor(249, 249, 249);
+                    doc.roundedRect(20, y - 5, 170, 50, 3, 3, 'F');
+                    doc.setFillColor(217, 119, 6);
+                    doc.rect(20, y - 5, 4, 50, 'F');
+                    
+                    y += 10;
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Appointment Details:', 30, y);
+                    y += 12;
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`Venue: ${venue}`, 30, y);
+                    y += 10;
+                    doc.text(`Date: ${formattedDate}`, 30, y);
+                    y += 10;
+                    doc.text(`NIN: ${formData.nin}`, 30, y);
+                    
+                    y += 25;
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Please note that our work hours are between 9am to 1pm', 20, y);
+                    y += 20;
+                    doc.setFont('helvetica', 'normal');
+                    doc.text('Warm regards,', 20, y);
+                    y += 8;
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('NIRA Diaspora Desk for Middle East', 20, y);
+                    
+                    // Footer
+                    doc.setFillColor(240, 240, 240);
+                    doc.rect(0, 270, 210, 30, 'F');
+                    doc.setFontSize(9);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text('For inquiries, contact paul.kasawuli@nira.go.ug', 105, 280, { align: 'center' });
+                    
+                    // Open in new tab
+                    const pdfDataUri = doc.output('datauristring');
+                    const newWindow = window.open();
+                    if (newWindow) {
+                      newWindow.document.write(`
+                        <html>
+                          <head><title>NIRA Appointment Confirmation - ${formData.nin}</title></head>
+                          <body style="margin:0;padding:0;">
+                            <iframe src="${pdfDataUri}" style="width:100%;height:100vh;border:none;"></iframe>
+                          </body>
+                        </html>
+                      `);
+                      toast.success('PDF opened in new tab. Use browser menu to save/print.');
+                    } else {
+                      toast.error('Pop-up blocked. Please allow pop-ups and try again.');
+                    }
+                  } catch (error) {
+                    console.error('Open PDF error:', error);
+                    toast.error('Could not open PDF. Please try again.');
+                  }
+                }}
+                variant="outline"
+                className="w-full border-amber-600 text-amber-700 hover:bg-amber-50"
+                data-testid="open-pdf-btn"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Open PDF in New Tab (Alternative)
+              </Button>
+            </div>
+            <p className="text-xs text-amber-600 mt-2">
+              Tip: If download doesn't work, try "Open PDF in New Tab" and save from there.
+            </p>
           </div>
           
           <Button 
