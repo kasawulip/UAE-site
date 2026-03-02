@@ -116,6 +116,7 @@ class Appointment(BaseModel):
     email: str
     location: str
     appointment_date: str
+    status: str = "pending"  # pending, completed
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class SlotAvailability(BaseModel):
