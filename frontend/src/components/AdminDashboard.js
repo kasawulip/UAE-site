@@ -734,13 +734,13 @@ const AdminDashboard = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <MapPin className="w-4 h-4 text-amber-600 mr-1" />
                             <span className="text-sm font-medium text-slate-900">{appointment.location}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <Calendar className="w-4 h-4 text-slate-400 mr-1" />
                             <span className="text-sm text-slate-600">
@@ -748,18 +748,56 @@ const AdminDashboard = () => {
                             </span>
                           </div>
                         </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {appointment.status === 'completed' ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Completed
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                              <Clock className="w-3 h-3 mr-1" />
+                              Pending
+                            </span>
+                          )}
+                        </td>
                         {adminInfo?.role !== 'viewer' && (
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Button
-                              onClick={() => handleRejectAppointment(appointment)}
-                              variant="outline"
-                              size="sm"
-                              className="border-red-300 text-red-600 hover:bg-red-50"
-                              data-testid={`reject-btn-${index}`}
-                            >
-                              <XCircle className="w-4 h-4 mr-1" />
-                              Reject
-                            </Button>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <div className="flex gap-2">
+                              {appointment.status !== 'completed' ? (
+                                <Button
+                                  onClick={() => handleUpdateStatus(appointment, 'completed')}
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-green-300 text-green-600 hover:bg-green-50"
+                                  data-testid={`complete-btn-${index}`}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-1" />
+                                  Complete
+                                </Button>
+                              ) : (
+                                <Button
+                                  onClick={() => handleUpdateStatus(appointment, 'pending')}
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-amber-300 text-amber-600 hover:bg-amber-50"
+                                  data-testid={`revert-btn-${index}`}
+                                >
+                                  <Clock className="w-4 h-4 mr-1" />
+                                  Revert
+                                </Button>
+                              )}
+                              <Button
+                                onClick={() => handleRejectAppointment(appointment)}
+                                variant="outline"
+                                size="sm"
+                                className="border-red-300 text-red-600 hover:bg-red-50"
+                                data-testid={`reject-btn-${index}`}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </div>
                           </td>
                         )}
                       </motion.tr>
