@@ -584,6 +584,39 @@ const AdminDashboard = () => {
               </div>
             </div>
 
+            {/* Status Filter */}
+            <div className="mt-4">
+              <Label className="text-sm font-medium text-slate-700 mb-3 block">Filter by Status</Label>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setStatusFilter('all')}
+                  variant={statusFilter === 'all' ? 'default' : 'outline'}
+                  className={statusFilter === 'all' ? 'bg-slate-900 text-white' : ''}
+                  data-testid="status-filter-all"
+                >
+                  All
+                </Button>
+                <Button
+                  onClick={() => setStatusFilter('pending')}
+                  variant={statusFilter === 'pending' ? 'default' : 'outline'}
+                  className={statusFilter === 'pending' ? 'bg-amber-600 text-white' : 'border-amber-300 text-amber-700'}
+                  data-testid="status-filter-pending"
+                >
+                  <Clock className="w-4 h-4 mr-1" />
+                  Pending
+                </Button>
+                <Button
+                  onClick={() => setStatusFilter('completed')}
+                  variant={statusFilter === 'completed' ? 'default' : 'outline'}
+                  className={statusFilter === 'completed' ? 'bg-green-600 text-white' : 'border-green-300 text-green-700'}
+                  data-testid="status-filter-completed"
+                >
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                  Completed
+                </Button>
+              </div>
+            </div>
+
             {/* Export and Results Summary */}
             <div className="flex items-center justify-between mt-6 pt-6 border-t border-slate-200">
               <div className="flex items-center gap-2">
