@@ -347,17 +347,159 @@ const AdminDashboard = () => {
           transition={{ duration: 0.5 }}
         >
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6" data-testid="stat-total">
-              <p className="text-sm font-medium text-slate-600 mb-2">Total Appointments</p>
-              <p className="text-4xl font-bold text-slate-900">{stats.total}</p>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4" data-testid="stat-total">
+              <p className="text-xs font-medium text-slate-600 mb-1">Total Appointments</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
             </div>
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6" data-testid="stat-abu-dhabi">
-              <p className="text-sm font-medium text-slate-600 mb-2">Abu Dhabi</p>
-              <p className="text-4xl font-bold text-slate-900">{stats.abuDhabi}</p>
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4" data-testid="stat-abu-dhabi">
+              <p className="text-xs font-medium text-slate-600 mb-1">Abu Dhabi</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.abuDhabi}</p>
             </div>
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6" data-testid="stat-dubai">
-              <p className="text-sm font-medium text-slate-600 mb-2">Dubai</p>
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4" data-testid="stat-dubai">
+              <p className="text-xs font-medium text-slate-600 mb-1">Dubai</p>
+              <p className="text-2xl font-bold text-slate-900">{stats.dubai}</p>
+            </div>
+            <div className="bg-green-50 rounded-lg border border-green-200 shadow-sm p-4" data-testid="stat-completed">
+              <p className="text-xs font-medium text-green-700 mb-1">Completed</p>
+              <p className="text-2xl font-bold text-green-700">{stats.completed}</p>
+            </div>
+            <div className="bg-amber-50 rounded-lg border border-amber-200 shadow-sm p-4" data-testid="stat-pending">
+              <p className="text-xs font-medium text-amber-700 mb-1">Pending</p>
+              <p className="text-2xl font-bold text-amber-700">{stats.pending}</p>
+            </div>
+          </div>
+
+          {/* Daily Summary Panel */}
+          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-amber-600" />
+                Daily Booking & Slot Summary
+              </h3>
+              <Button
+                onClick={() => setShowDailySummary(!showDailySummary)}
+                variant="outline"
+                size="sm"
+                className="border-slate-300"
+              >
+                {showDailySummary ? 'Hide' : 'Show'} Details
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                <Label className="text-sm text-slate-600">Select Date:</Label>
+                <Input
+                  type="date"
+                  value={summaryDate}
+                  onChange={(e) => setSummaryDate(e.target.value)}
+                  className="w-44"
+                />
+              </div>
+              <Button
+                onClick={() => fetchDailySummary(summaryDate)}
+                size="sm"
+                className="bg-amber-600 hover:bg-amber-700"
+              >
+                Get Summary
+              </Button>
+            </div>
+
+            {showDailySummary && dailySummary && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mt-4"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Abu Dhabi Summary */}
+                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                    <h4 className="font-semibold text-slate-900 mb-3">Abu Dhabi</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Total Bookings:</span>
+                        <span className="font-medium">{dailySummary.abu_dhabi.total_bookings}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-green-600">Completed:</span>
+                        <span className="font-medium text-green-600">{dailySummary.abu_dhabi.completed}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-amber-600">Pending:</span>
+                        <span className="font-medium text-amber-600">{dailySummary.abu_dhabi.pending}</span>
+                      </div>
+                      <hr className="border-slate-300" />
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Total Slots:</span>
+                        <span className="font-medium">{dailySummary.abu_dhabi.total_slots}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-blue-600">Available:</span>
+                        <span className="font-bold text-blue-600">{dailySummary.abu_dhabi.available_slots}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dubai Summary */}
+                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                    <h4 className="font-semibold text-slate-900 mb-3">Dubai</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Total Bookings:</span>
+                        <span className="font-medium">{dailySummary.dubai.total_bookings}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-green-600">Completed:</span>
+                        <span className="font-medium text-green-600">{dailySummary.dubai.completed}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-amber-600">Pending:</span>
+                        <span className="font-medium text-amber-600">{dailySummary.dubai.pending}</span>
+                      </div>
+                      <hr className="border-slate-300" />
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Total Slots:</span>
+                        <span className="font-medium">{dailySummary.dubai.total_slots}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-blue-600">Available:</span>
+                        <span className="font-bold text-blue-600">{dailySummary.dubai.available_slots}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Combined Totals */}
+                  <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                    <h4 className="font-semibold text-slate-900 mb-3">Combined Totals</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Total Bookings:</span>
+                        <span className="font-bold">{dailySummary.totals.total_bookings}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-green-600">Completed:</span>
+                        <span className="font-bold text-green-600">{dailySummary.totals.completed}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-amber-600">Pending:</span>
+                        <span className="font-bold text-amber-600">{dailySummary.totals.pending}</span>
+                      </div>
+                      <hr className="border-amber-300" />
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">Total Slots:</span>
+                        <span className="font-bold">{dailySummary.totals.total_slots}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-blue-600">Available:</span>
+                        <span className="font-bold text-blue-600">{dailySummary.totals.available_slots}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </div>
               <p className="text-4xl font-bold text-slate-900">{stats.dubai}</p>
             </div>
           </div>
