@@ -574,6 +574,95 @@ async def get_appointments(
         ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     return appointments
 
+# Model for status update request
+class UpdateStatusRequest(BaseModel):
+    appointment_id: str
+    status: str  # "pending" or "completed"
+
+@api_router.put("/admin/appointments/status")
+async def update_appointment_status(
+    request: UpdateStatusRequest,
+    current_admin: AdminUser = Depends(get_current_admin)
+):
+    """Update appointment status (admin only)"""
+    # Only admin and superadmin can update status (not viewer)
+    if current_admin.role == "viewer":
+        raise HTTPException(status_code=403, detail="Viewers cannot update appointment status")
+    
+    # Validate status
+    if request.status not in ["pending", "completed"]:
+        raise HTTPException(status_code=400, detail="Status must be 'pending' or 'completed'")
+    
+    # Update the appointment status
+    result = await db.appointments.update_one(
+        {"id": request.appointment_id},
+        {"$set": {"status": request.status}}
+    )
+    
+    if result.modified_count == 1:
+        return {"message": f"Appointment status updated to '{request.status}'", "status": request.status}
+    elif result.matched_count == 1:
+        return {"message": "Status unchanged (already set to this value)", "status": request.status}
+    else:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+
+@api_router.get("/admin/daily-summary")
+async def get_daily_summary(
+    date: str,
+    current_admin: AdminUser = Depends(get_current_admin)
+):
+    """Get daily booking summary with slot availability for a specific date"""
+    slot_limits = {"Abu Dhabi": 150, "Dubai": 80}
+    
+    # Get counts for each location on the specified date
+    abu_dhabi_total = await db.appointments.count_documents({
+        "location": "Abu Dhabi",
+        "appointment_date": date
+    })
+    
+    dubai_total = await db.appointments.count_documents({
+        "location": "Dubai",
+        "appointment_date": date
+    })
+    
+    # Get completed counts
+    abu_dhabi_completed = await db.appointments.count_documents({
+        "location": "Abu Dhabi",
+        "appointment_date": date,
+        "status": "completed"
+    })
+    
+    dubai_completed = await db.appointments.count_documents({
+        "location": "Dubai",
+        "appointment_date": date,
+        "status": "completed"
+    })
+    
+    return {
+        "date": date,
+        "abu_dhabi": {
+            "total_bookings": abu_dhabi_total,
+            "completed": abu_dhabi_completed,
+            "pending": abu_dhabi_total - abu_dhabi_completed,
+            "total_slots": slot_limits["Abu Dhabi"],
+            "available_slots": slot_limits["Abu Dhabi"] - abu_dhabi_total
+        },
+        "dubai": {
+            "total_bookings": dubai_total,
+            "completed": dubai_completed,
+            "pending": dubai_total - dubai_completed,
+            "total_slots": slot_limits["Dubai"],
+            "available_slots": slot_limits["Dubai"] - dubai_total
+        },
+        "totals": {
+            "total_bookings": abu_dhabi_total + dubai_total,
+            "completed": abu_dhabi_completed + dubai_completed,
+            "pending": (abu_dhabi_total - abu_dhabi_completed) + (dubai_total - dubai_completed),
+            "total_slots": slot_limits["Abu Dhabi"] + slot_limits["Dubai"],
+            "available_slots": (slot_limits["Abu Dhabi"] - abu_dhabi_total) + (slot_limits["Dubai"] - dubai_total)
+        }
+    }
+
 # Model for rejection request
 class RejectAppointmentRequest(BaseModel):
     appointment_id: str
