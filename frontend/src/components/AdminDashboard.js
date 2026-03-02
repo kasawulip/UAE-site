@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { Calendar, MapPin, Mail, Phone, User, ShieldCheck, Loader2, Download, Filter, Search, LogOut, FileSpreadsheet, FileText, XCircle } from 'lucide-react';
+import { Calendar, MapPin, Mail, Phone, User, ShieldCheck, Loader2, Download, Filter, Search, LogOut, FileSpreadsheet, FileText, XCircle, CheckCircle, Clock, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,7 +21,11 @@ const AdminDashboard = () => {
   const [filter, setFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [adminInfo, setAdminInfo] = useState(null);
+  const [dailySummary, setDailySummary] = useState(null);
+  const [summaryDate, setSummaryDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [showDailySummary, setShowDailySummary] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
