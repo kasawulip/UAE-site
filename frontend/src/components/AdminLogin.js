@@ -125,15 +125,6 @@ const AdminLogin = () => {
             </Button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 pt-6 border-t border-slate-200">
-            <p className="text-xs text-slate-500 text-center mb-2">Demo Credentials:</p>
-            <div className="bg-slate-50 rounded p-3 text-xs space-y-1">
-              <p className="text-slate-600"><strong>Admin:</strong> admin / password</p>
-              <p className="text-slate-600"><strong>Viewer:</strong> viewer / password</p>
-            </div>
-          </div>
-
           {/* Back to Home */}
           <div className="mt-6 text-center">
             <button
