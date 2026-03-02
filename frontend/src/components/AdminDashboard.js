@@ -500,9 +500,6 @@ const AdminDashboard = () => {
               </motion.div>
             )}
           </div>
-              <p className="text-4xl font-bold text-slate-900">{stats.dubai}</p>
-            </div>
-          </div>
 
           {/* Search Box */}
           <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 mb-6">
