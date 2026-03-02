@@ -614,29 +614,27 @@ async def get_daily_summary(
     """Get daily booking summary with slot availability for a specific date"""
     slot_limits = {"Abu Dhabi": 150, "Dubai": 80}
     
-    # Get counts for each location on the specified date
-    abu_dhabi_total = await db.appointments.count_documents({
-        "location": "Abu Dhabi",
-        "appointment_date": date
-    })
-    
-    dubai_total = await db.appointments.count_documents({
-        "location": "Dubai",
-        "appointment_date": date
-    })
-    
-    # Get completed counts
-    abu_dhabi_completed = await db.appointments.count_documents({
-        "location": "Abu Dhabi",
-        "appointment_date": date,
-        "status": "completed"
-    })
-    
-    dubai_completed = await db.appointments.count_documents({
-        "location": "Dubai",
-        "appointment_date": date,
-        "status": "completed"
-    })
+    # Execute all count queries in parallel for better performance
+    abu_dhabi_total, dubai_total, abu_dhabi_completed, dubai_completed = await asyncio.gather(
+        db.appointments.count_documents({
+            "location": "Abu Dhabi",
+            "appointment_date": date
+        }),
+        db.appointments.count_documents({
+            "location": "Dubai",
+            "appointment_date": date
+        }),
+        db.appointments.count_documents({
+            "location": "Abu Dhabi",
+            "appointment_date": date,
+            "status": "completed"
+        }),
+        db.appointments.count_documents({
+            "location": "Dubai",
+            "appointment_date": date,
+            "status": "completed"
+        })
+    )
     
     return {
         "date": date,
