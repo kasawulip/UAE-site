@@ -683,20 +683,21 @@ const AdminDashboard = () => {
               <table className="w-full" data-testid="appointments-table">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">NIN</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Contact</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Location</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">NIN</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Contact</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Location</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Status</th>
                     {adminInfo?.role !== 'viewer' && (
-                      <th className="px-6 py-4 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Actions</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-slate-600 uppercase tracking-wider">Actions</th>
                     )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {filteredAppointments.length === 0 ? (
                     <tr>
-                      <td colSpan={adminInfo?.role !== 'viewer' ? 6 : 5} className="px-6 py-12 text-center text-slate-500">
+                      <td colSpan={adminInfo?.role !== 'viewer' ? 7 : 6} className="px-6 py-12 text-center text-slate-500">
                         No appointments found
                       </td>
                     </tr>
