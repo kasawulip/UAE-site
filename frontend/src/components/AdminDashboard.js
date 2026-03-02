@@ -108,6 +108,43 @@ const AdminDashboard = () => {
     }
   };
 
+  // Update appointment status
+  const handleUpdateStatus = async (appointment, newStatus) => {
+    if (adminInfo?.role === 'viewer') {
+      toast.error('Viewers cannot update appointment status');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('admin_token');
+      await axios.put(
+        `${API}/admin/appointments/status`,
+        { appointment_id: appointment.id, status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success(`Appointment marked as ${newStatus}`);
+      await fetchAppointments(token);
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error(error.response?.data?.detail || 'Failed to update status');
+    }
+  };
+
+  // Fetch daily summary
+  const fetchDailySummary = async (date) => {
+    try {
+      const token = localStorage.getItem('admin_token');
+      const response = await axios.get(`${API}/admin/daily-summary?date=${date}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDailySummary(response.data);
+    } catch (error) {
+      console.error('Error fetching daily summary:', error);
+      toast.error('Failed to fetch daily summary');
+    }
+  };
+
   // Apply filters and search
   const filteredAppointments = appointments.filter(apt => {
     // Location filter
@@ -121,14 +158,19 @@ const AdminDashboard = () => {
       `${apt.firstname} ${apt.surname}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
       apt.nin.toLowerCase().includes(searchQuery.toLowerCase());
     
-    return locationMatch && dateMatch && searchMatch;
+    // Status filter
+    const statusMatch = statusFilter === 'all' || apt.status === statusFilter;
+    
+    return locationMatch && dateMatch && searchMatch && statusMatch;
   });
 
   const stats = {
     total: appointments.length,
     abuDhabi: appointments.filter(apt => apt.location === 'Abu Dhabi').length,
     dubai: appointments.filter(apt => apt.location === 'Dubai').length,
-    filtered: filteredAppointments.length
+    filtered: filteredAppointments.length,
+    completed: appointments.filter(apt => apt.status === 'completed').length,
+    pending: appointments.filter(apt => apt.status !== 'completed').length
   };
 
   // Export to Excel
