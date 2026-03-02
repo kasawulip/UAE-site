@@ -26,6 +26,7 @@ const AdminDashboard = () => {
   const [dailySummary, setDailySummary] = useState(null);
   const [summaryDate, setSummaryDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [showDailySummary, setShowDailySummary] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
