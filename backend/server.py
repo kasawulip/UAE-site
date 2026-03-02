@@ -762,12 +762,9 @@ DEFAULT_ADMIN_ACCOUNTS = [
     {"username": "paul.kasawuli", "email": "paul.kasawuli@nira.go.ug", "password": "SuperAdmin@2026", "role": "superadmin"},
     # Staff Admins
     {"username": "ashah.nabbanja", "email": "ashah.nabbanja@nira.go.ug", "password": "Admin@2026", "role": "admin"},
-    {"username": "erina.zalwango", "email": "erina.zalwango@nira.go.ug", "password": "Admin@2026", "role": "admin"},
+    {"username": "zalwango.erina", "email": "zalwango.erina@nira.go.ug", "password": "Zalwango@2026", "role": "admin"},
     {"username": "ceasar.kotevu", "email": "ceasar.kotevu@nira.go.ug", "password": "Admin@2026", "role": "admin"},
     {"username": "arthur.magooba", "email": "arthur.magooba@nira.go.ug", "password": "Admin@2026", "role": "admin"},
-    # Demo accounts
-    {"username": "admin", "email": "admin@nira.go.ug", "password": "password", "role": "admin"},
-    {"username": "viewer", "email": "viewer@nira.go.ug", "password": "password", "role": "viewer"},
 ]
 
 @app.on_event("startup")
