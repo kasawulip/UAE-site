@@ -319,10 +319,13 @@ const AppointmentForm = () => {
     // Disable past dates
     if (date < startOfDay(new Date())) return true;
     
-    // Disable dates within 24 hours (can't book for tomorrow if it's already past the cutoff)
+    // Disable dates within 24 hours (can't book for a day if it's already past the cutoff)
     const now = new Date();
     const appointmentDate = startOfDay(date);
-    const hoursUntilAppointment = (appointmentDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const millisecondsUntilAppointment = appointmentDate.getTime() - now.getTime();
+    const hoursUntilAppointment = millisecondsUntilAppointment / (1000 * 60 * 60);
+    
+    // If less than 24 hours until the start of the appointment day, disable it
     if (hoursUntilAppointment < 24) return true;
     
     // Disable public holidays (Uganda and UAE)
@@ -875,7 +878,16 @@ const AppointmentForm = () => {
                     selected={selectedDate}
                     onSelect={handleDateSelect}
                     disabled={disabledMatcher}
-                    fromDate={new Date('2026-03-04')}
+                    fromDate={(() => {
+                      // Calculate minimum date: at least 24 hours from now
+                      const now = new Date();
+                      const minDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+                      // Start of day after 24 hours
+                      minDate.setHours(0, 0, 0, 0);
+                      // Also ensure it's not before March 4, 2026 (system start date)
+                      const systemStartDate = new Date('2026-03-04');
+                      return minDate > systemStartDate ? minDate : systemStartDate;
+                    })()}
                     className="rounded-md border shadow" 
                     data-testid="appointment-calendar"
                   />
@@ -883,8 +895,6 @@ const AppointmentForm = () => {
                 
                 <p className="text-sm text-slate-600 mt-4 text-center">
                   Available days: Monday to Friday (9:00 AM - 3:00 PM). Public holidays are not available.
-                  <br />
-                  <span className="text-amber-600 font-medium">Appointments start from March 4, 2026.</span>
                   <br />
                   <span className="text-slate-500 text-xs">Note: Bookings must be made at least 24 hours in advance.</span>
                 </p>
