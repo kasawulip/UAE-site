@@ -491,6 +491,21 @@ async def create_appointment(appointment: AppointmentCreate):
             detail=f"Booking rejected: You already have a confirmed appointment under this NIN. Your existing appointment is scheduled for {existing_date} at {existing_location}. Please cancel your existing appointment to make a new booking."
         )
     
+    # Check 24-hour cutoff - can't book appointments less than 24 hours in advance
+    try:
+        appointment_date = datetime.strptime(appointment.appointment_date, '%Y-%m-%d')
+        appointment_datetime = appointment_date.replace(hour=0, minute=0, second=0, tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
+        hours_until_appointment = (appointment_datetime - now).total_seconds() / 3600
+        
+        if hours_until_appointment < 24:
+            raise HTTPException(
+                status_code=400,
+                detail="Booking rejected: Appointments must be booked at least 24 hours in advance. Please select a later date."
+            )
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format")
+    
     # Check slot availability
     slot_limits = {"Abu Dhabi": 150, "Dubai": 80}
     count = await db.appointments.count_documents({

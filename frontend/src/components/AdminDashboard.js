@@ -134,15 +134,19 @@ const AdminDashboard = () => {
 
   // Fetch daily summary
   const fetchDailySummary = async (date) => {
+    setSummaryLoading(true);
     try {
       const token = localStorage.getItem('admin_token');
       const response = await axios.get(`${API}/admin/daily-summary?date=${date}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setDailySummary(response.data);
+      setShowDailySummary(true);
     } catch (error) {
       console.error('Error fetching daily summary:', error);
       toast.error('Failed to fetch daily summary');
+    } finally {
+      setSummaryLoading(false);
     }
   };
 
@@ -378,17 +382,19 @@ const AdminDashboard = () => {
                 <BarChart3 className="w-5 h-5 text-amber-600" />
                 Daily Booking & Slot Summary
               </h3>
-              <Button
-                onClick={() => setShowDailySummary(!showDailySummary)}
-                variant="outline"
-                size="sm"
-                className="border-slate-300"
-              >
-                {showDailySummary ? 'Hide' : 'Show'} Details
-              </Button>
+              {dailySummary && (
+                <Button
+                  onClick={() => setShowDailySummary(!showDailySummary)}
+                  variant="outline"
+                  size="sm"
+                  className="border-slate-300"
+                >
+                  {showDailySummary ? 'Hide' : 'Show'} Details
+                </Button>
+              )}
             </div>
             
-            <div className="flex items-center gap-4 mb-4">
+            <div className="flex flex-wrap items-center gap-4 mb-4">
               <div className="flex items-center gap-2">
                 <Label className="text-sm text-slate-600">Select Date:</Label>
                 <Input
@@ -402,8 +408,16 @@ const AdminDashboard = () => {
                 onClick={() => fetchDailySummary(summaryDate)}
                 size="sm"
                 className="bg-amber-600 hover:bg-amber-700"
+                disabled={summaryLoading}
               >
-                Get Summary
+                {summaryLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  'Get Summary'
+                )}
               </Button>
             </div>
 

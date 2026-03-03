@@ -310,7 +310,7 @@ const AppointmentForm = () => {
     }
   };
 
-  // Matcher for calendar - disable weekends, public holidays, and past dates
+  // Matcher for calendar - disable weekends, public holidays, past dates, and dates within 24 hours
   const disabledMatcher = (date) => {
     const day = getDay(date);
     // Disable Saturday (6) and Sunday (0) - Allow Monday to Friday
@@ -318,6 +318,12 @@ const AppointmentForm = () => {
     
     // Disable past dates
     if (date < startOfDay(new Date())) return true;
+    
+    // Disable dates within 24 hours (can't book for tomorrow if it's already past the cutoff)
+    const now = new Date();
+    const appointmentDate = startOfDay(date);
+    const hoursUntilAppointment = (appointmentDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    if (hoursUntilAppointment < 24) return true;
     
     // Disable public holidays (Uganda and UAE)
     if (isPublicHoliday(date)) return true;
@@ -879,6 +885,8 @@ const AppointmentForm = () => {
                   Available days: Monday to Friday (9:00 AM - 3:00 PM). Public holidays are not available.
                   <br />
                   <span className="text-amber-600 font-medium">Appointments start from March 4, 2026.</span>
+                  <br />
+                  <span className="text-slate-500 text-xs">Note: Bookings must be made at least 24 hours in advance.</span>
                 </p>
                 {selectedDate && (
                   <p className="text-sm font-medium text-amber-600 mt-2 text-center" data-testid="selected-date-display">
