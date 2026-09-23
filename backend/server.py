@@ -20,6 +20,19 @@ from jose import JWTError, jwt
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Slot configuration - Special override for Abu Dhabi on Dec 17, 2025
+DEFAULT_SLOT_LIMITS = {"Abu Dhabi": 150, "Dubai": 80}
+SPECIAL_SLOT_OVERRIDES = {
+    "2025-12-17": {"Abu Dhabi": 300}  # One-day override for Abu Dhabi
+}
+
+def get_slot_limits(date_str: str = None) -> dict:
+    """Get slot limits, checking for any date-specific overrides"""
+    limits = DEFAULT_SLOT_LIMITS.copy()
+    if date_str and date_str in SPECIAL_SLOT_OVERRIDES:
+        limits.update(SPECIAL_SLOT_OVERRIDES[date_str])
+    return limits
+
 # Security
 SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
 ALGORITHM = "HS256"
@@ -446,11 +459,8 @@ async def delete_admin_user(username: str, current_admin: AdminUser = Depends(re
 @api_router.get("/slots/{location}/{date}")
 async def get_slot_availability(location: str, date: str):
     """Get available slots for a specific location and date"""
-    # Define slot limits
-    slot_limits = {
-        "Abu Dhabi": 150,
-        "Dubai": 80
-    }
+    # Get slot limits (with any date-specific overrides)
+    slot_limits = get_slot_limits(date)
     
     if location not in slot_limits:
         raise HTTPException(status_code=400, detail="Invalid location")
@@ -506,8 +516,8 @@ async def create_appointment(appointment: AppointmentCreate):
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format")
     
-    # Check slot availability
-    slot_limits = {"Abu Dhabi": 150, "Dubai": 80}
+    # Check slot availability (with date-specific overrides)
+    slot_limits = get_slot_limits(appointment.appointment_date)
     count = await db.appointments.count_documents({
         "location": appointment.location,
         "appointment_date": appointment.appointment_date
@@ -627,7 +637,7 @@ async def get_daily_summary(
     current_admin: AdminUser = Depends(get_current_admin)
 ):
     """Get daily booking summary with slot availability for a specific date"""
-    slot_limits = {"Abu Dhabi": 150, "Dubai": 80}
+    slot_limits = get_slot_limits(date)
     
     # Execute all count queries in parallel for better performance
     abu_dhabi_total, dubai_total, abu_dhabi_completed, dubai_completed = await asyncio.gather(
