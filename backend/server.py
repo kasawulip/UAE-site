@@ -23,7 +23,7 @@ load_dotenv(ROOT_DIR / '.env')
 # Slot configuration - Special override for Abu Dhabi on Dec 17, 2025
 DEFAULT_SLOT_LIMITS = {"Abu Dhabi": 150, "Dubai": 80}
 SPECIAL_SLOT_OVERRIDES = {
-    "2025-12-17": {"Abu Dhabi": 300}  # One-day override for Abu Dhabi
+    "2026-09-24": {"Abu Dhabi": 300}  # One-day override for Abu Dhabi (Sep 24, 2026)
 }
 
 def get_slot_limits(date_str: str = None) -> dict:
