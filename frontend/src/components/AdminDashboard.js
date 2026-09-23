@@ -716,10 +716,13 @@ const AdminDashboard = () => {
                     </tr>
                   ) : (
                     filteredAppointments.map((appointment, index) => (
-                      <tr
+                      <motion.tr
                         key={appointment.id}
                         className="hover:bg-slate-50"
                         data-testid={`appointment-row-${index}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: index * 0.02 }}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
