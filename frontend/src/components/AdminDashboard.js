@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { Calendar, MapPin, Mail, Phone, User, ShieldCheck, Loader2, Download, Filter, Search, LogOut, FileSpreadsheet, FileText, XCircle, CheckCircle, Clock, BarChart3 } from 'lucide-react';
@@ -29,25 +29,7 @@ const AdminDashboard = () => {
   const [summaryLoading, setSummaryLoading] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const token = localStorage.getItem('admin_token');
-    const username = localStorage.getItem('admin_username');
-    const role = localStorage.getItem('admin_role');
-    
-    if (!token) {
-      navigate('/admin/login');
-      return;
-    }
-
-    setAdminInfo({ username, role });
-    await fetchAppointments(token);
-  };
-
-  const fetchAppointments = async (token) => {
+  const fetchAppointments = useCallback(async (token) => {
     try {
       // Fetch all appointments (limit=0 means no limit)
       const response = await axios.get(`${API}/appointments?limit=0`, {
@@ -57,7 +39,10 @@ const AdminDashboard = () => {
     } catch (error) {
       if (error.response?.status === 401) {
         toast.error('Session expired. Please login again');
-        handleLogout();
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_username');
+        localStorage.removeItem('admin_role');
+        navigate('/admin/login');
       } else {
         console.error('Error fetching appointments:', error);
         toast.error('Failed to fetch appointments');
@@ -65,7 +50,25 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('admin_token');
+      const username = localStorage.getItem('admin_username');
+      const role = localStorage.getItem('admin_role');
+      
+      if (!token) {
+        navigate('/admin/login');
+        return;
+      }
+
+      setAdminInfo({ username, role });
+      await fetchAppointments(token);
+    };
+    
+    checkAuth();
+  }, [navigate, fetchAppointments]);
 
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
