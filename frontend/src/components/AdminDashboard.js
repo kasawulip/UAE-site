@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { Calendar, MapPin, Mail, Phone, User, ShieldCheck, Loader2, Download, Filter, Search, LogOut, FileSpreadsheet, FileText, XCircle, CheckCircle, Clock, BarChart3 } from 'lucide-react';
+import { Calendar, MapPin, Mail, Phone, User, ShieldCheck, Loader2, Download, Filter, Search, LogOut, FileSpreadsheet, FileText, XCircle, CheckCircle, Clock, BarChart3, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -605,7 +605,7 @@ const AdminDashboard = () => {
             {/* Status Filter */}
             <div className="mt-4">
               <Label className="text-sm font-medium text-slate-700 mb-3 block">Filter by Status</Label>
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-wrap">
                 <Button
                   onClick={() => setStatusFilter('all')}
                   variant={statusFilter === 'all' ? 'default' : 'outline'}
@@ -631,6 +631,15 @@ const AdminDashboard = () => {
                 >
                   <CheckCircle className="w-4 h-4 mr-1" />
                   Completed
+                </Button>
+                <Button
+                  onClick={() => setStatusFilter('expired')}
+                  variant={statusFilter === 'expired' ? 'default' : 'outline'}
+                  className={statusFilter === 'expired' ? 'bg-slate-500 text-white' : 'border-slate-300 text-slate-600'}
+                  data-testid="status-filter-expired"
+                >
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  Expired
                 </Button>
               </div>
             </div>
@@ -770,6 +779,16 @@ const AdminDashboard = () => {
                               <CheckCircle className="w-3 h-3 mr-1" />
                               Completed
                             </span>
+                          ) : appointment.status === 'expired' ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                              <AlertCircle className="w-3 h-3 mr-1" />
+                              Expired
+                            </span>
+                          ) : appointment.status === 'rejected' ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Rejected
+                            </span>
                           ) : (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                               <Clock className="w-3 h-3 mr-1" />
@@ -779,41 +798,45 @@ const AdminDashboard = () => {
                         </td>
                         {adminInfo?.role !== 'viewer' && (
                           <td className="px-4 py-4 whitespace-nowrap">
-                            <div className="flex gap-2">
-                              {appointment.status !== 'completed' ? (
+                            {appointment.status === 'expired' || appointment.status === 'rejected' ? (
+                              <span className="text-sm text-slate-400">No actions available</span>
+                            ) : (
+                              <div className="flex gap-2">
+                                {appointment.status !== 'completed' ? (
+                                  <Button
+                                    onClick={() => handleUpdateStatus(appointment, 'completed')}
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-green-300 text-green-600 hover:bg-green-50"
+                                    data-testid={`complete-btn-${index}`}
+                                  >
+                                    <CheckCircle className="w-4 h-4 mr-1" />
+                                    Complete
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    onClick={() => handleUpdateStatus(appointment, 'pending')}
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-amber-300 text-amber-600 hover:bg-amber-50"
+                                    data-testid={`revert-btn-${index}`}
+                                  >
+                                    <Clock className="w-4 h-4 mr-1" />
+                                    Revert
+                                  </Button>
+                                )}
                                 <Button
-                                  onClick={() => handleUpdateStatus(appointment, 'completed')}
+                                  onClick={() => handleRejectAppointment(appointment)}
                                   variant="outline"
                                   size="sm"
-                                  className="border-green-300 text-green-600 hover:bg-green-50"
-                                  data-testid={`complete-btn-${index}`}
+                                  className="border-red-300 text-red-600 hover:bg-red-50"
+                                  data-testid={`reject-btn-${index}`}
                                 >
-                                  <CheckCircle className="w-4 h-4 mr-1" />
-                                  Complete
+                                  <XCircle className="w-4 h-4 mr-1" />
+                                  Reject
                                 </Button>
-                              ) : (
-                                <Button
-                                  onClick={() => handleUpdateStatus(appointment, 'pending')}
-                                  variant="outline"
-                                  size="sm"
-                                  className="border-amber-300 text-amber-600 hover:bg-amber-50"
-                                  data-testid={`revert-btn-${index}`}
-                                >
-                                  <Clock className="w-4 h-4 mr-1" />
-                                  Revert
-                                </Button>
-                              )}
-                              <Button
-                                onClick={() => handleRejectAppointment(appointment)}
-                                variant="outline"
-                                size="sm"
-                                className="border-red-300 text-red-600 hover:bg-red-50"
-                                data-testid={`reject-btn-${index}`}
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Reject
-                              </Button>
-                            </div>
+                              </div>
+                            )}
                           </td>
                         )}
                       </motion.tr>

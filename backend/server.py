@@ -466,10 +466,12 @@ async def get_slot_availability(location: str, date: str):
     if location not in slot_limits:
         raise HTTPException(status_code=400, detail="Invalid location")
     
-    # Count existing appointments for this location and date
+    # Count only pending appointments for this location and date
+    # Expired/completed/rejected appointments don't take up slots
     count = await db.appointments.count_documents({
         "location": location,
-        "appointment_date": date
+        "appointment_date": date,
+        "status": "pending"
     })
     
     total_slots = slot_limits[location]
@@ -489,9 +491,11 @@ async def create_appointment(appointment: AppointmentCreate):
     if appointment.location not in ["Abu Dhabi", "Dubai"]:
         raise HTTPException(status_code=400, detail="Invalid location. Must be 'Abu Dhabi' or 'Dubai'")
     
-    # Check if NIN already has ANY active appointment in the system
+    # Check if NIN already has a PENDING appointment in the system
+    # Expired, completed, or rejected appointments don't block rebooking
     existing = await db.appointments.find_one({
-        "nin": appointment.nin
+        "nin": appointment.nin,
+        "status": "pending"
     }, {"_id": 0})
     
     if existing:
@@ -499,7 +503,7 @@ async def create_appointment(appointment: AppointmentCreate):
         existing_location = existing.get('location', 'Unknown location')
         raise HTTPException(
             status_code=400, 
-            detail=f"Booking rejected: You already have a confirmed appointment under this NIN. Your existing appointment is scheduled for {existing_date} at {existing_location}. Please cancel your existing appointment to make a new booking."
+            detail=f"Booking rejected: You already have a pending appointment under this NIN. Your existing appointment is scheduled for {existing_date} at {existing_location}. Please cancel your existing appointment to make a new booking."
         )
     
     # Check 24-hour cutoff - can't book appointments less than 24 hours in advance
@@ -525,10 +529,12 @@ async def create_appointment(appointment: AppointmentCreate):
         raise HTTPException(status_code=400, detail="Invalid date format")
     
     # Check slot availability (with date-specific overrides)
+    # Only count pending appointments towards slot limit
     slot_limits = get_slot_limits(appointment.appointment_date)
     count = await db.appointments.count_documents({
         "location": appointment.location,
-        "appointment_date": appointment.appointment_date
+        "appointment_date": appointment.appointment_date,
+        "status": "pending"
     })
     
     if count >= slot_limits[appointment.location]:
@@ -541,17 +547,17 @@ async def create_appointment(appointment: AppointmentCreate):
     appointment_obj = Appointment(**appointment.model_dump())
     doc = appointment_obj.model_dump()
     
-    # Save to database - unique index on NIN prevents duplicates even with concurrent requests
+    # Save to database - partial unique index on NIN (where status=pending) prevents duplicates
     try:
         await db.appointments.insert_one(doc)
     except DuplicateKeyError:
-        # Race condition: another request created an appointment for this NIN
-        existing = await db.appointments.find_one({"nin": appointment.nin}, {"_id": 0})
+        # Race condition: another request created a pending appointment for this NIN
+        existing = await db.appointments.find_one({"nin": appointment.nin, "status": "pending"}, {"_id": 0})
         existing_date = existing.get('appointment_date', 'Unknown date') if existing else 'Unknown date'
         existing_location = existing.get('location', 'Unknown location') if existing else 'Unknown location'
         raise HTTPException(
             status_code=400, 
-            detail=f"Booking rejected: You already have a confirmed appointment under this NIN. Your existing appointment is scheduled for {existing_date} at {existing_location}. Please cancel your existing appointment to make a new booking."
+            detail=f"Booking rejected: You already have a pending appointment under this NIN. Your existing appointment is scheduled for {existing_date} at {existing_location}. Please cancel your existing appointment to make a new booking."
         )
     
     # Send confirmation email
@@ -800,28 +806,56 @@ DEFAULT_ADMIN_ACCOUNTS = [
 
 @app.on_event("startup")
 async def startup_create_default_admins():
-    """Create default admin accounts and database indexes on application startup"""
+    """Create default admin accounts, database indexes, and auto-expire past appointments"""
     
-    # Drop old index if exists and create unique index on NIN only
-    # This enforces "one active appointment per NIN" at the database level
+    # Auto-expire past appointments first
+    logger.info("Checking for past appointments to expire...")
+    try:
+        today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        # Find all pending appointments with dates in the past
+        result = await db.appointments.update_many(
+            {
+                "appointment_date": {"$lt": today},
+                "status": "pending"
+            },
+            {"$set": {"status": "expired"}}
+        )
+        if result.modified_count > 0:
+            logger.info(f"Auto-expired {result.modified_count} past appointments")
+        else:
+            logger.info("No past appointments to expire")
+    except Exception as e:
+        logger.error(f"Error auto-expiring appointments: {str(e)}")
+    
+    # Drop old index and create partial unique index on NIN (only for pending appointments)
+    # This allows users to rebook after their appointment expires
     logger.info("Creating database indexes...")
     try:
-        # Try to drop the old compound index if it exists
+        # Try to drop the old unique index if it exists
+        try:
+            await db.appointments.drop_index("unique_nin")
+            logger.info("Dropped old unique index on nin")
+        except Exception:
+            pass  # Index might not exist
+        
+        # Try to drop old compound index if it exists
         try:
             await db.appointments.drop_index("unique_nin_date")
             logger.info("Dropped old compound index (nin + appointment_date)")
         except Exception:
             pass  # Index might not exist
         
-        # Create new unique index on NIN only
+        # Create partial unique index on NIN - only for pending appointments
+        # This allows multiple appointments per NIN as long as only one is "pending"
         await db.appointments.create_index(
             [("nin", 1)],
             unique=True,
-            name="unique_nin"
+            partialFilterExpression={"status": "pending"},
+            name="unique_nin_pending"
         )
-        logger.info("Created unique index on appointments (nin) - enforces one active appointment per NIN")
+        logger.info("Created partial unique index on appointments (nin where status=pending) - enforces one pending appointment per NIN")
     except Exception as e:
-        # Index might already exist, which is fine
+        # Index might already exist with same spec, which is fine
         logger.info(f"Index creation note: {str(e)}")
     
     logger.info("Checking and creating default admin accounts...")
