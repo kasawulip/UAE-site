@@ -20,10 +20,11 @@ from jose import JWTError, jwt
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# Slot configuration - Special override for Abu Dhabi on Sep 24, 2026
-DEFAULT_SLOT_LIMITS = {"Abu Dhabi": 150, "Dubai": 80}
+# Slot configuration for National ID Issuance
+DEFAULT_SLOT_LIMITS = {"Abu Dhabi": 300, "Dubai": 200}
 SPECIAL_SLOT_OVERRIDES = {
-    "2026-09-24": {"Abu Dhabi": 300}  # One-day override for Abu Dhabi (Sep 24, 2026)
+    # Add date-specific overrides here if needed, e.g.:
+    # "2026-12-25": {"Abu Dhabi": 0, "Dubai": 0}  # Holiday closure
 }
 
 def get_slot_limits(date_str: str = None) -> dict:
