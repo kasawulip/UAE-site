@@ -1,0 +1,33 @@
+{
+  "summary": "Verified Thursday-only restriction end-to-end. Backend: 9/9 pytest tests pass — rejects Mon/Tue/Wed/Fri/Sat with 'Appointments are only available on Thursdays' error, accepts Thursday bookings, confirms 2026-09-24 (Thu) is accepted and a future Friday is rejected with the Thursday error. Slot limits endpoint returns Abu Dhabi=300 and Dubai=200 as required. Frontend: AppointmentForm calendar correctly disables non-Thursday days (verified via DOM — only Oct 15, 22, 29 — all under 'Th' column — are enabled in October 2026). Help text correctly reads 'Available days: Thursdays only (9:00 AM - 3:00 PM). Public holidays are not available.'",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "AppointmentForm location cards", "issue": "Hardcoded slot text is stale: shows 'Abu Dhabi: 150 slots available daily' and 'Dubai: 80 slots available daily' while actual backend limits are 300 and 200. Misleads users on homepage.", "selector": "AppointmentForm.js lines 833 & 856", "priority": "HIGH"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_thursday_restriction.py",
+    "/app/test_reports/pytest/thursday_results.xml"
+  ],
+  "action_items": [
+    "Update AppointmentForm.js lines 833 and 856 to reflect new slot limits (Abu Dhabi 300, Dubai 200) — currently still displays old 150 / 80 values."
+  ],
+  "critical_code_review_comments": [
+    "Backend validation order in server.py (line 505-525): 24-hour cutoff is checked BEFORE weekday check. For dates <24h away that happen to be non-Thursday, the user sees the 24h message instead of the Thursday-only message. Consider swapping order so the Thursday restriction is explained first (more actionable). Not a blocker — functionally correct.",
+    "Frontend disabledMatcher correctly uses getDay(date) !== 4 for Thursday (JS Sunday=0..Saturday=6). Backend uses weekday() != 3 (Python Mon=0..Sun=6). Both correct for Thursday.",
+    "Carried over: SPECIAL_SLOT_OVERRIDES hardcoded in server.py; server.py ~856 lines (above split threshold)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_thursday_restriction.py (new)"
+  ],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "100% calendar logic + help text; stale slot-count labels flagged"},
+  "test_credentials": "superadmin: paul.kasawuli / SuperAdmin@2026 (not needed for this iteration)",
+  "seed_data_creation": "test_accept_thursday_appointment created 1 real appointment with NIN prefixed CM<random hex>. No cleanup endpoint used; impact is minimal (one row).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Thursday-only restriction verified. Note the hardcoded slot-count display strings in AppointmentForm.js L833/L856 are stale (show 150/80 while backend uses 300/200). Also note validation order inside POST /api/appointments puts 24h cutoff before weekday check — tests must pick dates far enough in future (60+ days) to isolate the Thursday-rejection error message.",
+  "rca of the issue": "N/A — feature change verified working. Only incidental finding: homepage location-card slot numbers were not updated when backend defaults changed to 300/200."
+}

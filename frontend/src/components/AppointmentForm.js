@@ -830,7 +830,7 @@ const AppointmentForm = () => {
                   </div>
                   <div className="p-4">
                     <h3 className="text-lg font-semibold text-slate-900">Abu Dhabi</h3>
-                    <p className="text-sm text-slate-600 mt-1">150 slots available daily</p>
+                    <p className="text-sm text-slate-600 mt-1">300 slots available weekly</p>
                   </div>
                 </motion.div>
                 
@@ -853,7 +853,7 @@ const AppointmentForm = () => {
                   </div>
                   <div className="p-4">
                     <h3 className="text-lg font-semibold text-slate-900">Dubai</h3>
-                    <p className="text-sm text-slate-600 mt-1">80 slots available daily</p>
+                    <p className="text-sm text-slate-600 mt-1">200 slots available weekly</p>
                   </div>
                 </motion.div>
               </div>
