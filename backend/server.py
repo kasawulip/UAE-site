@@ -808,7 +808,19 @@ DEFAULT_ADMIN_ACCOUNTS = [
 async def startup_create_default_admins():
     """Create default admin accounts, database indexes, and auto-expire past appointments"""
     
-    # Auto-expire past appointments first
+    # First, ensure all appointments have a status field (for legacy data)
+    logger.info("Checking for appointments without status field...")
+    try:
+        result = await db.appointments.update_many(
+            {"status": {"$exists": False}},
+            {"$set": {"status": "pending"}}
+        )
+        if result.modified_count > 0:
+            logger.info(f"Added 'pending' status to {result.modified_count} legacy appointments")
+    except Exception as e:
+        logger.error(f"Error updating legacy appointments: {str(e)}")
+    
+    # Auto-expire past appointments
     logger.info("Checking for past appointments to expire...")
     try:
         today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
