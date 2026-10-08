@@ -1,0 +1,39 @@
+{
+  "summary": "Verified the legacy-appointments visibility fix end-to-end. Backend: GET /api/appointments returns all 22 appointments (20 expired + 2 pending), every record has a non-null 'status' field (0 missing). Startup logic on server.py L811-820 sets 'pending' for status-less legacy docs and auto-expire logic (L823-840) flips past-dated pending to 'expired'. Frontend Admin Dashboard (superadmin paul.kasawuli) shows: Total Appointments=22, Pending stat=2, 20 gray 'Expired' badges with 'No actions available' text, 2 amber 'Pending' badges. Status filters work: Expired=>20 rows, Pending=>2 rows (with Reject action buttons visible), All=>22 rows. The previously flagged bug in iteration_6 (Pending stat card miscount) now reads 2 correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "AdminDashboard appointments table",
+       "issues": ["React hydration warning in console: '<span> cannot be a child of <tbody>' / '<tr> cannot be a child of <span>'. A wrapper <span style={display:contents}> is being rendered between <tbody> and <motion.tr> (likely from a map/Fragment pattern around L723 in AdminDashboard.js). Not blocking rendering but should wrap rows in <AnimatePresence>/<React.Fragment> or move the span to a non-table context."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_appointments.py",
+    "/app/backend/tests/test_auto_expire.py"
+  ],
+  "action_items": [
+    "Minor (non-blocking): remove the <span data-ve-dynamic> wrapper that is being rendered as a direct child of <tbody> around AdminDashboard.js L723 to clear the React hydration warnings in console."
+  ],
+  "critical_code_review_comments": [
+    "Startup migration logic at server.py L811-820 is idempotent and safe to re-run — good.",
+    "Auto-expire still only runs at process startup (as flagged in iteration_6). Legacy data is now backfilled, but a long-running process will accumulate past-dated 'pending' rows until next restart. Consider a background scheduler.",
+    "server.py now > 900 lines — still exceeds 700-line guideline; split into routers/services.",
+    "DEFAULT_ADMIN_ACCOUNTS passwords are still hardcoded (L797-805); should be sourced from env."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (22/22 appointments returned, all with status)",
+    "frontend": "100% (all 6 requested verifications pass)"
+  },
+  "test_credentials": "superadmin paul.kasawuli / SuperAdmin@2026",
+  "seed_data_creation": "None. Used existing seeded data (22 appointments).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 6 test asks are green. Current DB state: 22 appointments, 20 expired (Feb-Mar 2025/2026), 2 pending (Oct 15 2026). Expired filter data-testid='status-filter-expired', Pending filter data-testid='status-filter-pending', All filter data-testid='status-filter-all'. There is a cosmetic React hydration warning from a <span> wrapper inside <tbody> on AdminDashboard.js around line 723 — safe to leave but worth fixing when touching that file.",
+  "rca of the issue": "RCA (already fixed by main agent): 20 legacy appointments were inserted without a 'status' field. The admin UI only rendered rows whose status matched a known badge, and some code paths treated missing status as unknown, so legacy rows were effectively invisible. Fix in server.py startup: (1) update_many({status:{$exists:false}},{$set:{status:'pending'}}) backfills legacy docs; (2) subsequent auto-expire marks past-dated pending as 'expired'. Verified: API returns 22 docs all with status; UI renders all 22 with correct Expired/Pending badges and the Expired filter button isolates the 20 past-dated rows."
+}
