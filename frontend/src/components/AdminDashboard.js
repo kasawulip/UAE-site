@@ -178,7 +178,8 @@ const AdminDashboard = () => {
     dubai: appointments.filter(apt => apt.location === 'Dubai').length,
     filtered: filteredAppointments.length,
     completed: appointments.filter(apt => apt.status === 'completed').length,
-    pending: appointments.filter(apt => apt.status !== 'completed').length
+    pending: appointments.filter(apt => apt.status === 'pending').length,
+    expired: appointments.filter(apt => apt.status === 'expired').length
   };
 
   // Export to Excel

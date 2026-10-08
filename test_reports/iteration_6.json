@@ -1,0 +1,47 @@
+{
+  "summary": "Verified Auto-Expire Appointments feature end-to-end. Backend 8/8 pytest pass: partial unique index `unique_nin_pending` exists with partialFilterExpression={status:'pending'}; startup auto-expire log confirmed ('Checking for past appointments to expire...' + 'Created partial unique index'); no pending past-dated appointments; booking rejected only when existing appointment is still pending; same NIN CAN rebook after status flipped to 'expired' or 'completed'; slot-availability counts only pending (expired appointment frees the slot). Frontend: Admin Dashboard shows gray 'Expired' badge, exposes an 'Expired' status filter button (data-testid=status-filter-expired), and renders 'No actions available' for expired rows. New booking happy path previously verified in iteration 5 remains green.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "AdminDashboard Stats card",
+        "issue": "'Pending' counter at the top uses `apt.status !== 'completed'` so it incorrectly includes 'expired' (and 'rejected') appointments. With an expired record present, Total=23 and Pending=23 while the actionable pending count is 22. Fix: `appointments.filter(a => a.status === 'pending').length`.",
+        "selector": "/app/frontend/src/components/AdminDashboard.js line 181",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_auto_expire.py",
+    "/app/test_reports/pytest/auto_expire_results.xml"
+  ],
+  "action_items": [
+    "AdminDashboard.js L181: fix stats.pending to count only status === 'pending' (currently also counts expired/rejected).",
+    "Consider running the auto-expire job periodically (currently it runs only on FastAPI startup). Long-lived server processes will accumulate 'pending' records whose date has silently moved into the past until the next restart. A nightly/async task or on-request lazy-expire would be more robust."
+  ],
+  "critical_code_review_comments": [
+    "Auto-expiration logic only fires inside the `@app.on_event('startup')` handler. Once the process is up, no mechanism re-evaluates past-dated pending records. Add either a scheduled background task (e.g., APScheduler/asyncio loop) or a cheap check at the top of the booking endpoint/slot endpoint.",
+    "Partial unique index is correct and enforces at the DB level — good. DuplicateKeyError is also caught in create_appointment (lines 553-561).",
+    "Backend still returns status 200 (not 201) for POST /api/appointments. Minor convention issue.",
+    "server.py now ~890 lines — exceeds 700-line guideline; consider splitting into routers/services/models modules.",
+    "DEFAULT_ADMIN_ACCOUNTS passwords hardcoded in source (lines 797-805). Should come from env, not code."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_auto_expire.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (8/8)",
+    "frontend": "100% for Expired badge, filter button, and no-actions UI (one minor Pending-counter miscount flagged)"
+  },
+  "test_credentials": "superadmin paul.kasawuli / SuperAdmin@2026",
+  "seed_data_creation": "Seeded one expired appointment id=TEST_EXPIRED_UI_001 (nin=CM_UI_EXPIRED1) directly in Mongo for UI verification and cleaned it up in a finally block. Pytest tests also create a few appointments with CM<random hex> NINs and remove them via a module-level cleanup fixture.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Auto-expire feature verified. Partial unique index name is `unique_nin_pending`. When seeding expired data directly in Mongo, use DB `test_database` (from backend/.env). Admin login selectors: `page.get_by_placeholder('Enter your username')` / 'Enter your password' / `button[name='Sign In']` — type='text' selector may fail because the username input renders without type attr in some browsers. The AdminDashboard Pending stats-card counter still conflates expired+pending (L181) — flag as a self-contained follow-up fix.",
+  "rca of the issue": "N/A — feature implementation is correct. Only product nit: stats.pending includes expired due to inverse-check logic."
+}
