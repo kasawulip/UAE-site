@@ -514,6 +514,13 @@ async def create_appointment(appointment: AppointmentCreate):
                 status_code=400,
                 detail="Booking rejected: Appointments must be booked at least 24 hours in advance. Please select a later date."
             )
+        
+        # Validate that the appointment date is a Thursday (weekday() returns 3 for Thursday)
+        if appointment_date.weekday() != 3:
+            raise HTTPException(
+                status_code=400,
+                detail="Booking rejected: Appointments are only available on Thursdays. Please select a Thursday."
+            )
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format")
     

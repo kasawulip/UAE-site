@@ -310,11 +310,11 @@ const AppointmentForm = () => {
     }
   };
 
-  // Matcher for calendar - disable weekends, public holidays, past dates, and dates within 24 hours
+  // Matcher for calendar - only allow Thursdays, exclude public holidays, past dates, and dates within 24 hours
   const disabledMatcher = (date) => {
     const day = getDay(date);
-    // Disable Saturday (6) and Sunday (0) - Allow Monday to Friday
-    if (day === 0 || day === 6) return true;
+    // Only allow Thursday (4) - Disable all other days
+    if (day !== 4) return true;
     
     // Disable past dates
     if (date < startOfDay(new Date())) return true;
@@ -894,7 +894,7 @@ const AppointmentForm = () => {
                 </div>
                 
                 <p className="text-sm text-slate-600 mt-4 text-center">
-                  Available days: Monday to Friday (9:00 AM - 3:00 PM). Public holidays are not available.
+                  Available days: <strong>Thursdays only</strong> (9:00 AM - 3:00 PM). Public holidays are not available.
                   <br />
                   <span className="text-slate-500 text-xs">Note: Bookings must be made at least 24 hours in advance.</span>
                 </p>
